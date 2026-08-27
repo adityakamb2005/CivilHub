@@ -47,7 +47,25 @@ function RegisterForm() {
 
       setIsSuccess(true)
     } catch (err: any) {
-      setError(err.message || 'Failed to create account')
+      // Distinguish a network/DNS failure from a real API error.
+      // "Failed to fetch" / TypeError means the Supabase host is unreachable —
+      // the project may be paused, deleted, or the URL in .env.local is wrong.
+      const isNetworkFailure =
+        err instanceof TypeError ||
+        (typeof err.message === 'string' &&
+          (err.message.toLowerCase().includes('failed to fetch') ||
+            err.message.toLowerCase().includes('networkerror') ||
+            err.message.toLowerCase().includes('network request failed')))
+
+      if (isNetworkFailure) {
+        setError(
+          'Cannot reach the authentication server. ' +
+          'The Supabase project may be paused or deleted. ' +
+          'Please check NEXT_PUBLIC_SUPABASE_URL in .env.local and ensure the project is active at supabase.com.'
+        )
+      } else {
+        setError(err.message || 'Failed to create account')
+      }
     } finally {
       setIsLoading(false)
     }

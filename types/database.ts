@@ -48,6 +48,9 @@ export interface Database {
           id: string
           profile_id: string
           headline: string | null
+          title: string | null
+          specialization: 'Structural Engineering' | 'Civil Construction' | 'Geotechnical Engineering' | 'Transportation Engineering' | 'Water Resources' | 'Environmental Engineering' | 'Construction Management' | 'Surveying' | 'Quantity Surveying' | 'Other' | null
+          visibility: 'public' | 'private' | null
           about: string | null
           years_experience: number | null
           is_verified: boolean
@@ -61,6 +64,9 @@ export interface Database {
           id?: string
           profile_id: string
           headline?: string | null
+          title?: string | null
+          specialization?: 'Structural Engineering' | 'Civil Construction' | 'Geotechnical Engineering' | 'Transportation Engineering' | 'Water Resources' | 'Environmental Engineering' | 'Construction Management' | 'Surveying' | 'Quantity Surveying' | 'Other' | null
+          visibility?: 'public' | 'private' | null
           about?: string | null
           years_experience?: number | null
           is_verified?: boolean
@@ -74,6 +80,9 @@ export interface Database {
           id?: string
           profile_id?: string
           headline?: string | null
+          title?: string | null
+          specialization?: 'Structural Engineering' | 'Civil Construction' | 'Geotechnical Engineering' | 'Transportation Engineering' | 'Water Resources' | 'Environmental Engineering' | 'Construction Management' | 'Surveying' | 'Quantity Surveying' | 'Other' | null
+          visibility?: 'public' | 'private' | null
           about?: string | null
           years_experience?: number | null
           is_verified?: boolean

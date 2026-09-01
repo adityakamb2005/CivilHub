@@ -62,17 +62,12 @@ export function ProfileCompletionCard({
 
       <div className="mt-auto">
         <Link 
-          href="/engineer/dashboard" // Route to editor when it exists
-          className="ch-btn ch-btn-outline w-full justify-between group disabled:opacity-50 disabled:pointer-events-none"
-          aria-disabled="true"
-          onClick={(e) => e.preventDefault()} // Disabled for this phase
+          href="/engineer/profile"
+          className="ch-btn ch-btn-outline w-full justify-between group"
         >
           <span>{isComplete ? "Update Profile" : "Continue Profile Setup"}</span>
           <ChevronRight size={16} className="text-[var(--color-ch-text-muted)] group-hover:text-[var(--color-ch-navy)] transition-colors" />
         </Link>
-        <p className="text-xs text-center text-[var(--color-ch-text-muted)] mt-2">
-          Profile editor coming soon
-        </p>
       </div>
     </div>
   )

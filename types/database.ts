@@ -42,6 +42,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       engineer_profiles: {
         Row: {
@@ -92,6 +93,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       client_profiles: {
         Row: {
@@ -118,6 +120,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -150,10 +153,12 @@ export interface Database {
           data?: Json | null
           created_at?: string
         }
+        Relationships: []
       }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
     Enums: Record<string, never>
+    CompositeTypes: Record<string, never>
   }
 }

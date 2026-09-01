@@ -27,16 +27,11 @@ export function ProfilePreview({
           Add your professional details so clients can discover your expertise on CivilHub.
         </p>
         <Link 
-          href="/engineer/dashboard"
-          onClick={(e) => e.preventDefault()}
-          className="ch-btn ch-btn-primary cursor-not-allowed opacity-70"
-          aria-disabled="true"
+          href="/engineer/profile"
+          className="ch-btn ch-btn-primary"
         >
           Complete Profile
         </Link>
-        <p className="text-xs text-[var(--color-ch-text-muted)] mt-3">
-          Profile editor coming soon
-        </p>
       </div>
     )
   }

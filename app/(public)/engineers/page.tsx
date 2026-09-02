@@ -1,14 +1,81 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { Search, SlidersHorizontal, HardHat } from 'lucide-react'
+import { createClient } from '@/lib/supabase/server'
+import { Database } from '@/types/database'
+import { EngineersDirectoryClient, PublicEngineerItem } from './EngineersDirectoryClient'
 
 export const metadata: Metadata = {
-  title: 'Find Civil Engineers',
+  title: 'Find Civil Engineers | CivilHub',
   description:
-    'Browse and connect with verified civil engineers. Filter by specialization, location, experience, and ratings.',
+    'Browse and connect with verified civil engineers. Filter by specialization, location, and experience.',
 }
 
-export default function EngineersPage() {
+type Profile = Database['public']['Tables']['profiles']['Row']
+type EngineerProfile = Database['public']['Tables']['engineer_profiles']['Row']
+
+export default async function EngineersPage() {
+  const supabase = await createClient()
+
+  // 1. Fetch engineer profiles with visibility = 'public'
+  const { data: engData } = await supabase
+    .from('engineer_profiles')
+    .select('*')
+    .eq('visibility', 'public')
+
+  const publicEngProfiles = (engData || []) as EngineerProfile[]
+
+  if (publicEngProfiles.length === 0) {
+    return (
+      <div className="ch-section">
+        <div className="ch-container">
+          <div className="mb-10">
+            <span className="ch-section-label mb-3 block">Engineer Directory</span>
+            <h1 className="ch-text-page-heading text-[var(--color-ch-navy)] mb-3">
+              Find a Civil Engineer
+            </h1>
+            <p className="text-[var(--color-ch-text-secondary)] max-w-xl">
+              Browse verified civil engineers across CivilHub. Filter by specialization, location, and experience level.
+            </p>
+          </div>
+
+          <EngineersDirectoryClient engineers={[]} />
+        </div>
+      </div>
+    )
+  }
+
+  // 2. Fetch corresponding profiles for public engineers
+  const profileIds = publicEngProfiles.map((e) => e.profile_id)
+
+  const { data: profilesData } = await supabase
+    .from('profiles')
+    .select('*')
+    .in('id', profileIds)
+    .eq('role', 'engineer')
+
+  const profilesMap = new Map<string, Profile>()
+  ;((profilesData || []) as Profile[]).forEach((p) => {
+    profilesMap.set(p.id, p)
+  })
+
+  // 3. Combine into PublicEngineerItem array
+  const engineersList: PublicEngineerItem[] = []
+
+  publicEngProfiles.forEach((eng) => {
+    const prof = profilesMap.get(eng.profile_id)
+    if (prof) {
+      engineersList.push({
+        id: prof.id,
+        full_name: prof.full_name,
+        avatar_url: prof.avatar_url,
+        location: prof.location,
+        title: eng.title,
+        specialization: eng.specialization,
+        years_experience: eng.years_experience,
+        is_verified: eng.is_verified || false,
+      })
+    }
+  })
+
   return (
     <div className="ch-section">
       <div className="ch-container">
@@ -19,50 +86,12 @@ export default function EngineersPage() {
             Find a Civil Engineer
           </h1>
           <p className="text-[var(--color-ch-text-secondary)] max-w-xl">
-            Browse verified civil engineers across India. Filter by specialization, location, experience level, and client ratings.
+            Browse verified civil engineers across CivilHub. Filter by specialization, location, and experience level.
           </p>
         </div>
 
-        {/* Search bar */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-10">
-          <div className="relative flex-1">
-            <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-ch-text-muted)]"
-            />
-            <input
-              type="search"
-              placeholder="Search by name, specialization, or location…"
-              className="ch-input pl-9"
-              aria-label="Search engineers"
-            />
-          </div>
-          <button className="ch-btn ch-btn-outline gap-2" aria-label="Open filters">
-            <SlidersHorizontal size={16} />
-            Filters
-          </button>
-        </div>
-
-        {/* Coming soon state */}
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-20 h-20 bg-[var(--color-ch-surface)] rounded-2xl border border-[var(--color-ch-border)] flex items-center justify-center mb-6">
-            <HardHat size={36} className="text-[var(--color-ch-text-muted)]" />
-          </div>
-          <h2 className="text-xl font-semibold text-[var(--color-ch-navy)] mb-2">
-            Engineer Directory Coming Soon
-          </h2>
-          <p className="text-[var(--color-ch-text-secondary)] max-w-md mb-8">
-            We&apos;re building out the full engineer directory with search, filters, and engineer profiles. In the meantime, engineers can register and create their profiles.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Link href="/register?role=engineer" className="ch-btn ch-btn-primary">
-              Join as Engineer
-            </Link>
-            <Link href="/" className="ch-btn ch-btn-outline">
-              Back to Home
-            </Link>
-          </div>
-        </div>
+        {/* Directory Search & List */}
+        <EngineersDirectoryClient engineers={engineersList} />
       </div>
     </div>
   )

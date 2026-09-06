@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CivilHub
 
-## Getting Started
+A professional platform for the civil engineering ecosystem. CivilHub connects engineers with clients and the broader construction industry through verified profiles, project portfolios, and engineering resources.
 
-First, run the development server:
+The project is under active development.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## Implemented Features
+
+- **Authentication** — Registration, login, logout, and forgot-password flows via Supabase Auth
+- **Engineer dashboard** — Protected dashboard for signed-in engineers
+- **Engineer profile editor** — Create and edit professional information, specializations, and profile visibility
+- **Public engineer directory** — Searchable, filterable listing of all public engineer profiles (`/engineers`)
+- **Public engineer profile pages** — Individual public profile pages (`/engineers/[id]`)
+- **Supabase Row Level Security (RLS)** — Database-level access control on engineer profiles and related tables
+
+---
+
+## Technology Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 |
+| Language | TypeScript 5 |
+| UI | React 19 |
+| Styling | Tailwind CSS 4 |
+| Component primitives | Radix UI |
+| Icons | Lucide React |
+| Backend / Database | Supabase (PostgreSQL) |
+| Authentication | Supabase Auth |
+| Database security | PostgreSQL Row Level Security |
+
+---
+
+## Project Structure
+
+```
+CivilHub/
+├── app/
+│   ├── (auth)/          # Login, register, forgot-password
+│   ├── (engineer)/      # Protected engineer routes (dashboard, profile editor)
+│   ├── (public)/        # Public routes (home, engineers directory, placeholder pages)
+│   ├── (admin)/         # Admin area (in progress)
+│   ├── (client)/        # Client area (in progress)
+│   └── api/             # API routes
+├── components/          # Shared UI components
+├── lib/                 # Supabase clients, utilities
+├── supabase/
+│   └── migrations/      # Database migrations
+├── types/               # Shared TypeScript types
+└── public/              # Static assets
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Local Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Prerequisites
 
-## Learn More
+- Node.js 20+
+- A [Supabase](https://supabase.com) project
 
-To learn more about Next.js, take a look at the following resources:
+### Environment variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Copy `.env.example` to `.env.local` and fill in your Supabase project credentials:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+```
 
-## Deploy on Vercel
+Do **not** commit `.env.local` or any service-role / secret keys.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Database
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Apply the migrations in `supabase/migrations/` to your Supabase project in order:
+
+1. `001_initial_schema.sql`
+2. `002_engineer_profiles.sql`
+
+### Commands
+
+```bash
+# Install dependencies
+npm install
+
+# Start the development server
+npm.cmd run dev
+
+# Build for production
+npm.cmd run build
+
+# Run the production build
+npm.cmd run start
+```
+
+The development server starts at `http://localhost:3000` by default.

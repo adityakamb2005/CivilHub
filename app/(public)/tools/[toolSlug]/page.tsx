@@ -1,5 +1,3 @@
-import Link from 'next/link'
-import { Calculator } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import CalculatorLayout from '@/components/tools/CalculatorLayout'
 import AreaCalculator from '@/components/tools/AreaCalculator'
@@ -9,6 +7,8 @@ import CementCalculator from '@/components/tools/CementCalculator'
 import SandCalculator from '@/components/tools/SandCalculator'
 import SteelCalculator from '@/components/tools/SteelCalculator'
 import UnitConverter from '@/components/tools/UnitConverter'
+import CostEstimator from '@/components/tools/CostEstimator'
+import BrickCalculator from '@/components/tools/BrickCalculator'
 
 // Map slugs to display names and descriptions
 const TOOLS_MAP: Record<string, { name: string; desc: string }> = {
@@ -62,26 +62,9 @@ export async function generateMetadata({ params }: PageProps) {
     return { title: 'Tool Not Found - CivilHub' }
   }
 
-  // Active implemented tool metadata
-  const ACTIVE_SLUGS = [
-    'area-calculator',
-    'volume-calculator',
-    'concrete-calculator',
-    'cement-calculator',
-    'sand-calculator',
-    'steel-calculator',
-    'unit-converter',
-  ]
-
-  if (ACTIVE_SLUGS.includes(toolSlug)) {
-    return {
-      title: `${toolInfo.name} - Free Civil Engineering Tools | CivilHub`,
-      description: toolInfo.desc,
-    }
-  }
-
   return {
-    title: `${toolInfo.name} - Coming Soon`,
+    title: `${toolInfo.name} - Free Civil Engineering Tools | CivilHub`,
+    description: toolInfo.desc,
   }
 }
 
@@ -143,32 +126,19 @@ export default async function ToolPage({ params }: PageProps) {
           <UnitConverter />
         </CalculatorLayout>
       )
+    case 'brick-calculator':
+      return (
+        <CalculatorLayout title={toolInfo.name} description={toolInfo.desc}>
+          <BrickCalculator />
+        </CalculatorLayout>
+      )
+    case 'cost-estimator':
+      return (
+        <CalculatorLayout title={toolInfo.name} description={toolInfo.desc}>
+          <CostEstimator />
+        </CalculatorLayout>
+      )
   }
 
-  // Render Coming Soon stub card for Brick Calculator & Cost Estimator
-  return (
-    <CalculatorLayout title={toolInfo.name} description={toolInfo.desc}>
-      <div className="max-w-2xl mx-auto ch-card p-10 sm:p-14 text-center">
-        <div className="w-20 h-20 bg-[var(--color-ch-surface)] rounded-2xl border border-[var(--color-ch-border)] flex items-center justify-center mx-auto mb-6">
-          <Calculator size={36} className="text-[var(--color-ch-text-muted)]" />
-        </div>
-
-        <h2 className="text-2xl sm:text-3xl font-bold text-[var(--color-ch-navy)] mb-4">
-          {toolInfo.name}
-        </h2>
-
-        <div className="inline-block px-3 py-1 rounded-full bg-[var(--color-ch-orange-light)] text-[var(--color-ch-orange)] text-xs font-semibold uppercase tracking-wider mb-6">
-          Coming Soon
-        </div>
-
-        <p className="text-[var(--color-ch-text-secondary)] leading-relaxed mb-8 max-w-lg mx-auto">
-          We are currently building this calculator for the CivilHub Tools module. Once completed, it will provide professional-grade estimates and computations tailored for field engineers.
-        </p>
-
-        <Link href="/tools" className="ch-btn ch-btn-primary px-8">
-          Browse Available Tools
-        </Link>
-      </div>
-    </CalculatorLayout>
-  )
+  notFound()
 }

@@ -1,5 +1,10 @@
 // lib/calculators/costEstimator.ts
 
+import {
+  CalculatorValidationError,
+  validatePositiveNumber,
+} from './validation'
+
 export type ConstructionType = 'economy' | 'standard' | 'premium' | 'luxury'
 export type LocationTier = 'tier1' | 'tier2' | 'rural'
 export type Currency = 'INR' | 'USD'
@@ -31,16 +36,54 @@ export function calculateCost(
   tier: LocationTier,
   currency: Currency
 ): CostResult {
+  validatePositiveNumber(areaM2, 'Area')
+
+  if (!Object.prototype.hasOwnProperty.call(RATES_INR, type)) {
+    throw new CalculatorValidationError(
+      'Construction type is invalid.',
+      'Construction type'
+    )
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(RATES_INR[type], tier)) {
+    throw new CalculatorValidationError(
+      'Location tier is invalid.',
+      'Location tier'
+    )
+  }
+
+  if (currency !== 'INR' && currency !== 'USD') {
+    throw new CalculatorValidationError('Currency is invalid.', 'Currency')
+  }
+
   const [rLow, rHigh] = RATES_INR[type][tier]
   const factor = currency === 'USD' ? INR_TO_USD : 1
+  const lowEstimate = areaM2 * rLow * factor
+  const highEstimate = areaM2 * rHigh * factor
+  const ratePerM2Low = rLow * factor
+  const ratePerM2High = rHigh * factor
+
+  assertFiniteCalculation(lowEstimate, 'Low estimate')
+  assertFiniteCalculation(highEstimate, 'High estimate')
+  assertFiniteCalculation(ratePerM2Low, 'Low rate')
+  assertFiniteCalculation(ratePerM2High, 'High rate')
 
   return {
-    lowEstimate: areaM2 * rLow * factor,
-    highEstimate: areaM2 * rHigh * factor,
+    lowEstimate,
+    highEstimate,
     currency,
-    ratePerM2Low: rLow * factor,
-    ratePerM2High: rHigh * factor,
+    ratePerM2Low,
+    ratePerM2High,
     areaM2,
+  }
+}
+
+function assertFiniteCalculation(value: number, fieldName: string): void {
+  if (!Number.isFinite(value)) {
+    throw new CalculatorValidationError(
+      `${fieldName} must be a valid finite number.`,
+      fieldName
+    )
   }
 }
 

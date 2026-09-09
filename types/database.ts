@@ -200,6 +200,102 @@ export interface Database {
         }
         Relationships: []
       }
+      opportunities: {
+        Row: {
+          id: string
+          title: string
+          description: string
+          opportunity_type: string
+          organization_name: string | null
+          location: string | null
+          deadline: string | null
+          status: 'open' | 'closed'
+          is_published: boolean
+          published_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description: string
+          opportunity_type: string
+          organization_name?: string | null
+          location?: string | null
+          deadline?: string | null
+          status?: 'open' | 'closed'
+          is_published?: boolean
+          published_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string
+          opportunity_type?: string
+          organization_name?: string | null
+          location?: string | null
+          deadline?: string | null
+          status?: 'open' | 'closed'
+          is_published?: boolean
+          published_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          id: string
+          title: string
+          description: string
+          project_type: string
+          location: string | null
+          client_name: string | null
+          engineer_profile_id: string | null
+          status: 'planned' | 'in_progress' | 'completed' | 'on_hold'
+          start_date: string | null
+          end_date: string | null
+          is_published: boolean
+          published_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description: string
+          project_type: string
+          location?: string | null
+          client_name?: string | null
+          engineer_profile_id?: string | null
+          status?: 'planned' | 'in_progress' | 'completed' | 'on_hold'
+          start_date?: string | null
+          end_date?: string | null
+          is_published?: boolean
+          published_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string
+          project_type?: string
+          location?: string | null
+          client_name?: string | null
+          engineer_profile_id?: string | null
+          status?: 'planned' | 'in_progress' | 'completed' | 'on_hold'
+          start_date?: string | null
+          end_date?: string | null
+          is_published?: boolean
+          published_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

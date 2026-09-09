@@ -1,14 +1,24 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { Briefcase } from 'lucide-react'
+import { createClient } from '@/lib/supabase/server'
+import OpportunityMarketplace from '@/components/opportunities/OpportunityMarketplace'
+import type { Opportunity } from '@/types'
 
 export const metadata: Metadata = {
-  title: 'Opportunities',
+  title: 'Opportunities | CivilHub',
   description:
     'Browse civil engineering job listings, tenders, and career opportunities on CivilHub.',
 }
 
-export default function OpportunitiesPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function OpportunitiesPage() {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('opportunities')
+    .select('*')
+    .order('deadline', { ascending: true, nullsFirst: false })
+    .order('created_at', { ascending: false })
+
   return (
     <div className="ch-section">
       <div className="ch-container">
@@ -22,25 +32,10 @@ export default function OpportunitiesPage() {
           </p>
         </div>
 
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-20 h-20 bg-[var(--color-ch-surface)] rounded-2xl border border-[var(--color-ch-border)] flex items-center justify-center mb-6">
-            <Briefcase size={36} className="text-[var(--color-ch-text-muted)]" />
-          </div>
-          <h2 className="text-xl font-semibold text-[var(--color-ch-navy)] mb-2">
-            Opportunities Coming Soon
-          </h2>
-          <p className="text-[var(--color-ch-text-secondary)] max-w-md mb-8">
-            We&apos;re building the opportunities board. Job listings, project tenders, and engineering career opportunities will be available here soon.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Link href="/register?role=engineer" className="ch-btn ch-btn-primary">
-              Join as Engineer
-            </Link>
-            <Link href="/" className="ch-btn ch-btn-outline">
-              Back to Home
-            </Link>
-          </div>
-        </div>
+        <OpportunityMarketplace
+          opportunities={(data || []) as Opportunity[]}
+          errorMessage={error ? 'Unable to load opportunities.' : null}
+        />
       </div>
     </div>
   )

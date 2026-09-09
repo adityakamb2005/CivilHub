@@ -1,23 +1,14 @@
-'use client'
-
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { HardHat, LogOut, ShieldAlert } from 'lucide-react'
+import { ShieldAlert } from 'lucide-react'
+import { requireAdminPage } from '@/lib/admin/auth'
+import { AdminHeaderActions } from './components/AdminHeader'
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const router = useRouter()
-  const supabase = createClient()
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
-  }
+  await requireAdminPage()
 
   return (
     <div className="min-h-screen bg-[var(--color-ch-surface)] flex flex-col">
@@ -34,13 +25,7 @@ export default function AdminLayout({
           
           <div className="flex items-center gap-4">
             <span className="ch-badge bg-[var(--color-ch-red-light)] text-[var(--color-ch-red)] text-xs">Admin</span>
-            <button
-              onClick={handleSignOut}
-              className="text-sm text-[var(--color-ch-text-secondary)] hover:text-[var(--color-ch-navy)] flex items-center gap-1.5 transition-colors"
-            >
-              <LogOut size={16} />
-              <span className="hidden sm:block">Sign out</span>
-            </button>
+            <AdminHeaderActions />
           </div>
         </div>
       </header>

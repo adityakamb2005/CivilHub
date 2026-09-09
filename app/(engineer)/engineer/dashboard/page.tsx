@@ -6,6 +6,7 @@ import { ProfileCompletionCard } from './components/ProfileCompletionCard'
 import { ProfileStatusCard } from './components/ProfileStatusCard'
 import { QuickActions } from './components/QuickActions'
 import { ProfilePreview } from './components/ProfilePreview'
+import { EngineerWorkspace } from './components/EngineerWorkspace'
 
 export const metadata = {
   title: 'Engineer Dashboard | CivilHub',
@@ -46,11 +47,38 @@ export default async function EngineerDashboardPage() {
   }
 
   // Fetch engineer profile (if it exists)
-  const { data: engineerProfile } = await supabase
+  const { data: engineerProfileData, error: engineerProfileError } = await supabase
     .from('engineer_profiles')
     .select('*')
     .eq('profile_id', user.id)
     .maybeSingle()
+  const engineerProfile = engineerProfileData as Database['public']['Tables']['engineer_profiles']['Row'] | null
+
+  // Project visibility is intentionally governed by the existing public RLS
+  // policy. This association query cannot expose unpublished/private rows.
+  let projects: Database['public']['Tables']['projects']['Row'][] = []
+  let projectsError = false
+
+  if (engineerProfile) {
+    const { data: projectsData, error: projectsQueryError } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('engineer_profile_id', engineerProfile.id)
+      .order('end_date', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
+
+    projects = (projectsData ?? []) as Database['public']['Tables']['projects']['Row'][]
+    projectsError = Boolean(projectsQueryError)
+  }
+
+  const [opportunitiesResult, resourcesResult] = await Promise.all([
+    supabase.from('opportunities').select('*', { count: 'exact', head: true }),
+    supabase.from('resources').select('*', { count: 'exact', head: true }),
+  ])
+
+  const summaryError = Boolean(
+    engineerProfileError || opportunitiesResult.error || resourcesResult.error
+  )
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -63,7 +91,7 @@ export default async function EngineerDashboardPage() {
             profile={profile} 
             engineerProfile={engineerProfile} 
           />
-          <QuickActions />
+          <QuickActions profileId={engineerProfile ? user.id : undefined} />
         </div>
 
         {/* Sidebar Column */}
@@ -76,6 +104,17 @@ export default async function EngineerDashboardPage() {
             engineerProfile={engineerProfile} 
           />
         </div>
+      </div>
+
+      <div className="mt-8">
+        <EngineerWorkspace
+          engineerProfile={engineerProfile}
+          projects={projects}
+          opportunitiesCount={opportunitiesResult.count ?? null}
+          resourcesCount={resourcesResult.count ?? null}
+          projectsError={projectsError}
+          summaryError={summaryError}
+        />
       </div>
     </div>
   )

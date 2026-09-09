@@ -44,6 +44,16 @@ export default async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  let userRole: string | undefined
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+    userRole = (profile as { role?: string } | null)?.role
+  }
+
   const { pathname } = request.nextUrl
 
   // Check if this route requires a specific role
@@ -63,7 +73,6 @@ export default async function proxy(request: NextRequest) {
     }
 
     // Authenticated but wrong role — redirect to their correct dashboard
-    const userRole = user.user_metadata?.role as string | undefined
     if (userRole !== requiredRole) {
       const dashboardUrl = request.nextUrl.clone()
       if (userRole === 'engineer') {
@@ -80,7 +89,6 @@ export default async function proxy(request: NextRequest) {
   // Redirect authenticated users away from auth pages
   if (user && (pathname === '/login' || pathname === '/register')) {
     const dashboardUrl = request.nextUrl.clone()
-    const userRole = user.user_metadata?.role as string | undefined
     if (userRole === 'engineer') {
       dashboardUrl.pathname = '/engineer/dashboard'
     } else if (userRole === 'admin') {

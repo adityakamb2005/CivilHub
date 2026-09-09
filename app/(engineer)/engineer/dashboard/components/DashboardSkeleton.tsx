@@ -45,6 +45,20 @@ export default function DashboardSkeleton() {
           </div>
         </div>
       </div>
+
+      {/* Workspace Skeleton */}
+      <div className="ch-card p-6 mt-8 min-h-[420px]">
+        <div className="h-3 w-32 bg-[var(--color-ch-border)] rounded mb-3"></div>
+        <div className="h-7 w-44 bg-[var(--color-ch-border)] rounded mb-2"></div>
+        <div className="h-4 w-80 max-w-full bg-[var(--color-ch-border-subtle)] rounded mb-6"></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+          <div className="h-40 bg-[var(--color-ch-border-subtle)] rounded"></div>
+          <div className="h-40 bg-[var(--color-ch-border-subtle)] rounded"></div>
+          <div className="h-40 bg-[var(--color-ch-border-subtle)] rounded"></div>
+          <div className="h-40 bg-[var(--color-ch-border-subtle)] rounded"></div>
+        </div>
+        <div className="h-28 bg-[var(--color-ch-border-subtle)] rounded"></div>
+      </div>
     </div>
   )
 }

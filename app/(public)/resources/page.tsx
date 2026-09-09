@@ -1,14 +1,24 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { BookOpen, Search } from 'lucide-react'
+import { createClient } from '@/lib/supabase/server'
+import ResourceLibrary from '@/components/resources/ResourceLibrary'
+import type { Resource } from '@/types'
 
 export const metadata: Metadata = {
-  title: 'Resources',
+  title: 'Resources | CivilHub',
   description:
     'Civil engineering articles, formulas, tutorials, career guidance, and construction knowledge on CivilHub.',
 }
 
-export default function ResourcesPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function ResourcesPage() {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('resources')
+    .select('*')
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
+
   return (
     <div className="ch-section">
       <div className="ch-container">
@@ -22,32 +32,10 @@ export default function ResourcesPage() {
           </p>
         </div>
 
-        {/* Search */}
-        <div className="relative max-w-lg mb-10">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-ch-text-muted)]" />
-          <input
-            type="search"
-            placeholder="Search resources…"
-            className="ch-input pl-9"
-            aria-label="Search resources"
-          />
-        </div>
-
-        {/* Coming soon */}
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-20 h-20 bg-[var(--color-ch-surface)] rounded-2xl border border-[var(--color-ch-border)] flex items-center justify-center mb-6">
-            <BookOpen size={36} className="text-[var(--color-ch-text-muted)]" />
-          </div>
-          <h2 className="text-xl font-semibold text-[var(--color-ch-navy)] mb-2">
-            Resources Library Coming Soon
-          </h2>
-          <p className="text-[var(--color-ch-text-secondary)] max-w-md mb-8">
-            We&apos;re building a comprehensive library of civil engineering resources. Check back soon for articles, formulas, and tutorials.
-          </p>
-          <Link href="/" className="ch-btn ch-btn-primary">
-            Back to Home
-          </Link>
-        </div>
+        <ResourceLibrary
+          resources={(data || []) as Resource[]}
+          errorMessage={error ? 'Unable to load resources.' : null}
+        />
       </div>
     </div>
   )

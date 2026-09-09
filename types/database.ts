@@ -155,6 +155,51 @@ export interface Database {
         }
         Relationships: []
       }
+      resources: {
+        Row: {
+          id: string
+          title: string
+          category: string
+          description: string
+          content: string
+          author_name: string | null
+          source_name: string | null
+          source_url: string | null
+          is_published: boolean
+          published_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          category: string
+          description: string
+          content: string
+          author_name?: string | null
+          source_name?: string | null
+          source_url?: string | null
+          is_published?: boolean
+          published_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          category?: string
+          description?: string
+          content?: string
+          author_name?: string | null
+          source_name?: string | null
+          source_url?: string | null
+          is_published?: boolean
+          published_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

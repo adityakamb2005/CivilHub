@@ -57,8 +57,10 @@ export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Check if this route requires a specific role
+  // Match route segments, not raw string prefixes. Without the boundary
+  // check, the public `/engineers` directory is treated as `/engineer/*`.
   const matchedPrefix = Object.keys(PROTECTED_ROUTES).find((prefix) =>
-    pathname.startsWith(prefix)
+    pathname === prefix || pathname.startsWith(`${prefix}/`)
   )
 
   if (matchedPrefix) {

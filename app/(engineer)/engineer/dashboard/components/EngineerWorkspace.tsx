@@ -12,9 +12,14 @@ import {
   BookOpen,
 } from 'lucide-react'
 import type { Database } from '@/types/database'
+import { ApplicationStatusBadge } from '@/components/applications/ApplicationStatusBadge'
+import { WithdrawApplicationButton } from '@/components/applications/WithdrawApplicationButton'
 
 type EngineerProfile = Database['public']['Tables']['engineer_profiles']['Row']
 type Project = Database['public']['Tables']['projects']['Row']
+type Application = Database['public']['Tables']['opportunity_applications']['Row'] & {
+  opportunity: Pick<Database['public']['Tables']['opportunities']['Row'], 'id' | 'title'> | null
+}
 
 const STATUS_LABELS: Record<Project['status'], string> = {
   planned: 'Planned',
@@ -46,12 +51,19 @@ function formatTimeline(project: Project): string | null {
   return null
 }
 
+function formatSubmittedAt(value: string): string {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? 'Date unavailable' : new Intl.DateTimeFormat('en', { dateStyle: 'medium' }).format(date)
+}
+
 export function EngineerWorkspace({
   engineerProfile,
   projects,
   opportunitiesCount,
   resourcesCount,
   projectsError,
+  applications,
+  applicationsError,
   summaryError,
 }: {
   engineerProfile: EngineerProfile | null
@@ -59,6 +71,8 @@ export function EngineerWorkspace({
   opportunitiesCount: number | null
   resourcesCount: number | null
   projectsError?: boolean
+  applications: Application[]
+  applicationsError?: boolean
   summaryError?: boolean
 }) {
   const profileIsPublic = engineerProfile?.visibility === 'public'
@@ -84,7 +98,7 @@ export function EngineerWorkspace({
         </div>
       </div>
 
-      {(projectsError || summaryError) && (
+      {(projectsError || applicationsError || summaryError) && (
         <div className="p-4 rounded-lg bg-[var(--color-ch-red-light)] border border-[var(--color-ch-red)]/20 text-[var(--color-ch-red)] flex items-start gap-3" role="alert">
           <AlertCircle size={18} className="shrink-0 mt-0.5" />
           <p className="text-sm">
@@ -179,6 +193,39 @@ export function EngineerWorkspace({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
           <div>
             <h3 className="text-lg font-bold text-[var(--color-ch-navy)] flex items-center gap-2">
+              <Briefcase size={19} className="text-[var(--color-ch-orange)]" />
+              My Applications
+            </h3>
+            <p className="text-sm text-[var(--color-ch-text-secondary)] mt-1">Track applications you have submitted to CivilHub opportunities.</p>
+          </div>
+          <Link href="/opportunities" className="ch-btn ch-btn-outline text-xs self-start sm:self-auto">Find opportunities <ArrowRight size={14} /></Link>
+        </div>
+
+        {applicationsError ? (
+          <div className="p-5 rounded-lg bg-[var(--color-ch-surface)] border border-[var(--color-ch-border)] text-sm text-[var(--color-ch-text-secondary)]">Your applications are unavailable right now. Please try again later.</div>
+        ) : !engineerProfile ? (
+          <div className="p-5 rounded-lg bg-[var(--color-ch-surface)] border border-[var(--color-ch-border)] text-sm text-[var(--color-ch-text-secondary)]">Complete your engineer profile before applying to opportunities.</div>
+        ) : applications.length === 0 ? (
+          <div className="p-5 rounded-lg bg-[var(--color-ch-surface)] border border-[var(--color-ch-border)] text-sm text-[var(--color-ch-text-secondary)]">You have not submitted any applications yet.</div>
+        ) : (
+          <div className="space-y-3">
+            {applications.map((application) => (
+              <div key={application.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border border-[var(--color-ch-border)]">
+                <div className="min-w-0">
+                  {application.opportunity ? <Link href={`/opportunities/${application.opportunity.id}`} className="font-semibold text-sm text-[var(--color-ch-navy)] hover:text-[var(--color-ch-orange)] hover:underline">{application.opportunity.title}</Link> : <p className="font-semibold text-sm text-[var(--color-ch-navy)]">Opportunity unavailable</p>}
+                  <p className="text-xs text-[var(--color-ch-text-muted)] mt-1">Submitted {formatSubmittedAt(application.created_at)}</p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0"><ApplicationStatusBadge status={application.status} />{application.status === 'pending' && <WithdrawApplicationButton applicationId={application.id} opportunityId={application.opportunity_id} />}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="ch-card p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+          <div>
+            <h3 className="text-lg font-bold text-[var(--color-ch-navy)] flex items-center gap-2">
               <FolderKanban size={19} className="text-[var(--color-ch-orange)]" />
               My Projects
             </h3>
@@ -256,7 +303,7 @@ export function EngineerWorkspace({
       <div className="p-4 rounded-lg bg-[var(--color-ch-surface)] border border-[var(--color-ch-border-subtle)] flex items-start gap-3">
         <CheckCircle2 size={17} className="text-[var(--color-ch-green)] shrink-0 mt-0.5" />
         <p className="text-xs text-[var(--color-ch-text-secondary)] leading-relaxed">
-          This workspace is read-only for projects and public marketplace content. Applications, bidding, project management, messaging, and payments are not part of this workspace yet.
+          Applications are limited to a cover message and a status update. Messaging, bidding, interviews, and payments are not part of this workspace.
         </p>
       </div>
     </section>

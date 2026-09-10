@@ -15,12 +15,16 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      // Get the user to determine their role for redirect
+      // Resolve redirects from the canonical database profile role. Metadata
+      // is retained only as a compatibility fallback for older accounts.
       const {
         data: { user },
       } = await supabase.auth.getUser()
 
-      const role = user?.user_metadata?.role as string | undefined
+      const { data: profile } = user
+        ? await (supabase as any).from('profiles').select('role').eq('id', user.id).maybeSingle()
+        : { data: null }
+      const role = ((profile as { role?: string } | null)?.role ?? user?.user_metadata?.role) as string | undefined
       let redirectPath = next
 
       if (redirectPath === '/') {

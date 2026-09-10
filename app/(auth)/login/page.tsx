@@ -29,9 +29,15 @@ function LoginForm() {
 
       if (signInError) throw signInError
 
-      // Get user role for redirect if no specific redirect provided
+      // Read the canonical role from profiles. Auth metadata can be missing or
+      // stale for users created before role-aware onboarding was introduced.
       if (redirectUrl === '/') {
-        const role = data.user?.user_metadata?.role
+        const { data: profile } = await (supabase as any)
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .maybeSingle()
+        const role = (profile as { role?: string } | null)?.role ?? data.user?.user_metadata?.role
         if (role === 'engineer') router.push('/engineer/dashboard')
         else if (role === 'admin') router.push('/admin/dashboard')
         else router.push('/client/dashboard')

@@ -71,6 +71,18 @@ export default async function EngineerDashboardPage() {
     projectsError = Boolean(projectsQueryError)
   }
 
+  let applications: Array<Database['public']['Tables']['opportunity_applications']['Row'] & { opportunity: Pick<Database['public']['Tables']['opportunities']['Row'], 'id' | 'title'> | null }> = []
+  let applicationsError = false
+  if (engineerProfile) {
+    const { data: applicationsData, error: applicationsQueryError } = await (supabase as any)
+      .from('opportunity_applications')
+      .select('*, opportunity:opportunities(id, title)')
+      .eq('engineer_profile_id', engineerProfile.id)
+      .order('created_at', { ascending: false })
+    applications = applicationsData ?? []
+    applicationsError = Boolean(applicationsQueryError)
+  }
+
   const [opportunitiesResult, resourcesResult] = await Promise.all([
     supabase.from('opportunities').select('*', { count: 'exact', head: true }),
     supabase.from('resources').select('*', { count: 'exact', head: true }),
@@ -113,6 +125,8 @@ export default async function EngineerDashboardPage() {
           opportunitiesCount={opportunitiesResult.count ?? null}
           resourcesCount={resourcesResult.count ?? null}
           projectsError={projectsError}
+          applications={applications}
+          applicationsError={applicationsError}
           summaryError={summaryError}
         />
       </div>

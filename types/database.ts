@@ -245,6 +245,36 @@ export interface Database {
         }
         Relationships: []
       }
+      opportunity_applications: {
+        Row: {
+          id: string
+          opportunity_id: string
+          engineer_profile_id: string
+          cover_message: string
+          status: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          opportunity_id: string
+          engineer_profile_id: string
+          cover_message: string
+          status?: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          opportunity_id?: string
+          engineer_profile_id?: string
+          cover_message?: string
+          status?: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           id: string

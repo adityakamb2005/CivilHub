@@ -11,6 +11,8 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import type { Opportunity } from '@/types'
+import { ApplicationForm } from '@/components/opportunities/ApplicationForm'
+import { ApplicationStatusBadge } from '@/components/applications/ApplicationStatusBadge'
 
 interface OpportunityPageProps {
   params: Promise<{ id: string }>
@@ -86,6 +88,31 @@ export default async function OpportunityDetailPage({ params }: OpportunityPageP
   }
 
   if (!opportunity) notFound()
+
+  const supabase = await createClient()
+  const db = supabase as any
+  const { data: { user } } = await supabase.auth.getUser()
+  let userRole: string | null = null
+  let applicationStatus: 'pending' | 'accepted' | 'rejected' | 'withdrawn' | null = null
+  let hasEngineerProfile = false
+
+  if (user) {
+    const { data: profile } = await db.from('profiles').select('role').eq('id', user.id).maybeSingle()
+    userRole = profile?.role ?? null
+    if (userRole === 'engineer') {
+      const { data: engineerProfile } = await db.from('engineer_profiles').select('id').eq('profile_id', user.id).maybeSingle()
+      hasEngineerProfile = Boolean(engineerProfile)
+      if (engineerProfile) {
+        const { data: application } = await db
+          .from('opportunity_applications')
+          .select('status')
+          .eq('opportunity_id', opportunity.id)
+          .eq('engineer_profile_id', engineerProfile.id)
+          .maybeSingle()
+        applicationStatus = application?.status ?? null
+      }
+    }
+  }
 
   const deadline = formatDate(opportunity.deadline)
 
@@ -164,6 +191,21 @@ export default async function OpportunityDetailPage({ params }: OpportunityPageP
                 {opportunity.description}
               </p>
             </div>
+
+            <section className="border-t border-[var(--color-ch-border-subtle)] pt-8 mt-8" aria-labelledby="apply-heading">
+              <h2 id="apply-heading" className="text-lg font-bold text-[var(--color-ch-navy)] mb-2">Apply for this opportunity</h2>
+              {!user ? (
+                <p className="text-sm text-[var(--color-ch-text-secondary)]">Please <Link href={`/login?redirect=${encodeURIComponent(`/opportunities/${opportunity.id}`)}`} className="font-semibold text-[var(--color-ch-orange)] hover:underline">log in</Link> with an engineer account to apply.</p>
+              ) : userRole !== 'engineer' ? (
+                <p className="text-sm text-[var(--color-ch-text-secondary)]">Applications are available to engineer accounts only.</p>
+              ) : !hasEngineerProfile ? (
+                <p className="text-sm text-[var(--color-ch-text-secondary)]">Complete your <Link href="/engineer/profile" className="font-semibold text-[var(--color-ch-orange)] hover:underline">engineer profile</Link> before applying.</p>
+              ) : applicationStatus ? (
+                <div className="flex flex-wrap items-center gap-3 p-4 rounded-lg bg-[var(--color-ch-surface)] border border-[var(--color-ch-border)]"><span className="text-sm text-[var(--color-ch-text-secondary)]">Your application status:</span><ApplicationStatusBadge status={applicationStatus} /><Link href="/engineer/dashboard" className="text-sm font-medium text-[var(--color-ch-orange)] hover:underline">View my applications</Link></div>
+              ) : (
+                <ApplicationForm opportunityId={opportunity.id} />
+              )}
+            </section>
           </div>
         </article>
       </div>

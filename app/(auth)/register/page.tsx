@@ -31,7 +31,7 @@ function RegisterForm() {
 
     try {
       const supabase = createClient()
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -44,6 +44,16 @@ function RegisterForm() {
       })
 
       if (signUpError) throw signUpError
+
+      // Supabase returns a session immediately when email confirmation is
+      // disabled. In that case, take engineers directly to onboarding. When
+      // confirmation is enabled, the callback route performs this redirect
+      // after the email link is exchanged for a session.
+      if (data.session) {
+        router.push(role === 'engineer' ? '/engineer/profile' : '/client/dashboard')
+        router.refresh()
+        return
+      }
 
       setIsSuccess(true)
     } catch (err: any) {
@@ -113,6 +123,7 @@ function RegisterForm() {
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
+              aria-pressed={role === 'client'}
               onClick={() => setRole('client')}
               className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
                 role === 'client'
@@ -126,6 +137,7 @@ function RegisterForm() {
             </button>
             <button
               type="button"
+              aria-pressed={role === 'engineer'}
               onClick={() => setRole('engineer')}
               className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
                 role === 'engineer'

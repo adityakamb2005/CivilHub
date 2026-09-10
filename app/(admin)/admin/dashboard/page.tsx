@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, BookOpen, Briefcase, FolderKanban, ShieldCheck, Users } from 'lucide-react'
+import { ArrowRight, BookOpen, Briefcase, FileText, FolderKanban, ShieldCheck, Users } from 'lucide-react'
 import { requireAdminPage } from '@/lib/admin/auth'
 
 export const metadata = { title: 'Admin Dashboard | CivilHub' }
@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function AdminDashboardPage() {
   const { supabase } = await requireAdminPage()
-  const [resources, publishedResources, opportunities, activeOpportunities, projects, publishedProjects, engineers] = await Promise.all([
+  const [resources, publishedResources, opportunities, activeOpportunities, projects, publishedProjects, engineers, applications] = await Promise.all([
     supabase.from('resources').select('*', { count: 'exact', head: true }),
     supabase.from('resources').select('*', { count: 'exact', head: true }).eq('is_published', true),
     supabase.from('opportunities').select('*', { count: 'exact', head: true }),
@@ -15,6 +15,7 @@ export default async function AdminDashboardPage() {
     supabase.from('projects').select('*', { count: 'exact', head: true }),
     supabase.from('projects').select('*', { count: 'exact', head: true }).eq('is_published', true),
     supabase.from('engineer_profiles').select('*', { count: 'exact', head: true }).eq('visibility', 'public'),
+    supabase.from('opportunity_applications').select('*', { count: 'exact', head: true }),
   ])
 
   const cards = [
@@ -22,8 +23,9 @@ export default async function AdminDashboardPage() {
     { label: 'Opportunities', count: opportunities.count, active: activeOpportunities.count, href: '/admin/opportunities', icon: Briefcase },
     { label: 'Projects', count: projects.count, active: publishedProjects.count, href: '/admin/projects', icon: FolderKanban },
     { label: 'Public engineers', count: engineers.count, active: null, href: '/engineers', icon: Users },
+    { label: 'Applications', count: applications.count, active: null, href: '/admin/applications', icon: FileText },
   ]
-  const countError = [resources, publishedResources, opportunities, activeOpportunities, projects, publishedProjects, engineers].some((result) => result.error)
+  const countError = [resources, publishedResources, opportunities, activeOpportunities, projects, publishedProjects, engineers, applications].some((result) => result.error)
 
   return (
     <div className="space-y-8">

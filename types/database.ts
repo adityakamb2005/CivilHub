@@ -284,6 +284,7 @@ export interface Database {
           location: string | null
           client_name: string | null
           engineer_profile_id: string | null
+          client_profile_id: string | null
           status: 'planned' | 'in_progress' | 'completed' | 'on_hold'
           start_date: string | null
           end_date: string | null
@@ -300,6 +301,7 @@ export interface Database {
           location?: string | null
           client_name?: string | null
           engineer_profile_id?: string | null
+          client_profile_id?: string | null
           status?: 'planned' | 'in_progress' | 'completed' | 'on_hold'
           start_date?: string | null
           end_date?: string | null
@@ -316,6 +318,7 @@ export interface Database {
           location?: string | null
           client_name?: string | null
           engineer_profile_id?: string | null
+          client_profile_id?: string | null
           status?: 'planned' | 'in_progress' | 'completed' | 'on_hold'
           start_date?: string | null
           end_date?: string | null

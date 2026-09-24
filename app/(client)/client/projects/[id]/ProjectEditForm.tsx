@@ -13,6 +13,7 @@ import {
   Globe,
   Lock,
   Eye,
+  Users,
 } from 'lucide-react'
 import type { Database } from '@/types/database'
 
@@ -169,15 +170,23 @@ export function ProjectEditForm({ project }: ProjectEditFormProps) {
             </p>
           </div>
 
-          {project.is_published && (
+          <div className="flex items-center gap-2 self-start sm:self-auto">
             <Link
-              href={`/projects/${project.id}`}
-              target="_blank"
-              className="ch-btn ch-btn-outline text-xs px-3 py-1.5 inline-flex items-center gap-1.5 self-start sm:self-auto"
+              href={`/client/projects/${project.id}/applications`}
+              className="ch-btn ch-btn-outline text-xs px-3 py-1.5 inline-flex items-center gap-1.5 text-blue-700 border-blue-200 hover:bg-blue-50"
             >
-              <Eye className="w-3.5 h-3.5" /> View Public Page
+              <Users className="w-3.5 h-3.5" /> Review Applicants
             </Link>
-          )}
+            {project.is_published && (
+              <Link
+                href={`/projects/${project.id}`}
+                target="_blank"
+                className="ch-btn ch-btn-outline text-xs px-3 py-1.5 inline-flex items-center gap-1.5"
+              >
+                <Eye className="w-3.5 h-3.5" /> View Public Page
+              </Link>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -10,11 +10,15 @@ import {
   FolderKanban,
   MapPin,
   Search,
+  UserCheck,
+  UserPlus,
 } from 'lucide-react'
 import type { Project } from '@/types'
 
 const ALL_TYPES = 'All project types'
 const ALL_LOCATIONS = 'All locations'
+const ALL_AVAILABILITY = 'All availability'
+const ACCEPTING_ONLY = 'Accepting applications'
 
 const STATUS_LABELS: Record<Project['status'], string> = {
   planned: 'Planned',
@@ -56,6 +60,7 @@ export default function ProjectDirectory({
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedType, setSelectedType] = useState(ALL_TYPES)
   const [selectedLocation, setSelectedLocation] = useState(ALL_LOCATIONS)
+  const [selectedAvailability, setSelectedAvailability] = useState(ALL_AVAILABILITY)
 
   const types = useMemo(
     () => [
@@ -83,6 +88,11 @@ export default function ProjectDirectory({
     const query = searchTerm.trim().toLowerCase()
 
     return projects.filter((project) => {
+      const isAccepting =
+        project.is_published &&
+        project.engineer_profile_id === null &&
+        (project.status === 'planned' || project.status === 'in_progress')
+
       const matchesSearch =
         !query ||
         project.title.toLowerCase().includes(query) ||
@@ -90,15 +100,19 @@ export default function ProjectDirectory({
       const matchesType = selectedType === ALL_TYPES || project.project_type === selectedType
       const matchesLocation =
         selectedLocation === ALL_LOCATIONS || project.location === selectedLocation
+      const matchesAvailability =
+        selectedAvailability === ALL_AVAILABILITY ||
+        (selectedAvailability === ACCEPTING_ONLY && isAccepting)
 
-      return matchesSearch && matchesType && matchesLocation
+      return matchesSearch && matchesType && matchesLocation && matchesAvailability
     })
-  }, [projects, searchTerm, selectedType, selectedLocation])
+  }, [projects, searchTerm, selectedType, selectedLocation, selectedAvailability])
 
   const clearFilters = () => {
     setSearchTerm('')
     setSelectedType(ALL_TYPES)
     setSelectedLocation(ALL_LOCATIONS)
+    setSelectedAvailability(ALL_AVAILABILITY)
   }
 
   if (errorMessage) {
@@ -121,7 +135,8 @@ export default function ProjectDirectory({
   const hasActiveFilters =
     searchTerm.trim().length > 0 ||
     selectedType !== ALL_TYPES ||
-    selectedLocation !== ALL_LOCATIONS
+    selectedLocation !== ALL_LOCATIONS ||
+    selectedAvailability !== ALL_AVAILABILITY
 
   return (
     <div>
@@ -145,6 +160,19 @@ export default function ProjectDirectory({
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <label htmlFor="project-availability" className="sr-only">
+            Filter projects by engineer application availability
+          </label>
+          <select
+            id="project-availability"
+            value={selectedAvailability}
+            onChange={(event) => setSelectedAvailability(event.target.value)}
+            className="ch-input bg-white h-11 pr-8 text-sm font-medium cursor-pointer"
+          >
+            <option value={ALL_AVAILABILITY}>All projects</option>
+            <option value={ACCEPTING_ONLY}>Accepting applications</option>
+          </select>
+
           <label htmlFor="project-type" className="sr-only">
             Filter projects by type
           </label>
@@ -200,7 +228,7 @@ export default function ProjectDirectory({
             No public projects yet
           </h2>
           <p className="text-sm text-[var(--color-ch-text-secondary)] max-w-md">
-            Engineers have not published any portfolio projects on CivilHub yet. Check back soon for completed and ongoing work.
+            No published civil engineering projects are currently listed. Check back soon for new project postings.
           </p>
         </div>
       ) : filteredProjects.length === 0 ? (
@@ -212,7 +240,7 @@ export default function ProjectDirectory({
             No matching projects found
           </h2>
           <p className="text-sm text-[var(--color-ch-text-secondary)] max-w-sm mb-4">
-            Try adjusting the search, project type, or location filters.
+            Try adjusting the search, project type, location, or application availability filters.
           </p>
           <button type="button" onClick={clearFilters} className="ch-btn ch-btn-outline text-xs">
             Clear Search Filters
@@ -227,6 +255,10 @@ export default function ProjectDirectory({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProjects.map((project) => {
               const timeline = formatTimeline(project)
+              const isAccepting =
+                project.is_published &&
+                project.engineer_profile_id === null &&
+                (project.status === 'planned' || project.status === 'in_progress')
 
               return (
                 <Link
@@ -242,6 +274,22 @@ export default function ProjectDirectory({
                       {STATUS_LABELS[project.status]}
                     </span>
                   </div>
+
+                  {isAccepting && (
+                    <div className="mb-3">
+                      <span className="ch-badge bg-emerald-50 text-emerald-700 border-emerald-200 inline-flex items-center gap-1 text-[11px]">
+                        <UserPlus size={12} /> Accepting Applications
+                      </span>
+                    </div>
+                  )}
+
+                  {!isAccepting && project.engineer_profile_id && (
+                    <div className="mb-3">
+                      <span className="ch-badge bg-blue-50 text-blue-700 border-blue-200 inline-flex items-center gap-1 text-[11px]">
+                        <UserCheck size={12} /> Engineer Assigned
+                      </span>
+                    </div>
+                  )}
 
                   <h2 className="font-semibold text-[var(--color-ch-navy)] mb-2 leading-snug group-hover:text-[var(--color-ch-orange)] transition-colors">
                     {project.title}
@@ -266,7 +314,7 @@ export default function ProjectDirectory({
                   </div>
 
                   <div className="flex items-center justify-end gap-1 pt-5 mt-4 border-t border-[var(--color-ch-border-subtle)] text-xs text-[var(--color-ch-orange)] font-medium">
-                    View details
+                    View details & apply
                     <ArrowRight size={14} />
                   </div>
                 </Link>

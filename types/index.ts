@@ -7,6 +7,7 @@ export type Notification = Database['public']['Tables']['notifications']['Row']
 export type Resource = Database['public']['Tables']['resources']['Row']
 export type Opportunity = Database['public']['Tables']['opportunities']['Row']
 export type OpportunityApplication = Database['public']['Tables']['opportunity_applications']['Row']
+export type ProjectApplication = Database['public']['Tables']['project_applications']['Row']
 export type Project = Database['public']['Tables']['projects']['Row']
 
 export type UserRole = 'engineer' | 'client' | 'admin'

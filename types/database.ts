@@ -329,6 +329,36 @@ export interface Database {
         }
         Relationships: []
       }
+      project_applications: {
+        Row: {
+          id: string
+          project_id: string
+          engineer_profile_id: string
+          cover_message: string
+          status: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          engineer_profile_id: string
+          cover_message: string
+          status?: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          project_id?: string
+          engineer_profile_id?: string
+          cover_message?: string
+          status?: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

@@ -9,9 +9,12 @@ import {
   CalendarDays,
   FolderKanban,
   MapPin,
+  UserCheck,
+  UserPlus,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import type { Project } from '@/types'
+import type { Project, ProjectApplication, UserRole } from '@/types'
+import { ProjectApplicationForm } from '@/components/applications/ProjectApplicationForm'
 
 interface ProjectPageProps {
   params: Promise<{ id: string }>
@@ -62,6 +65,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
   if (!isProjectId(id)) notFound()
 
   const supabase = await createClient()
+  const db = supabase as any
   const { data, error } = await supabase.from('projects').select('*').eq('id', id).maybeSingle()
   const project = data as Project | null
 
@@ -91,6 +95,41 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
   }
 
   if (!project) notFound()
+
+  // Fetch User & Role Context
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  let userRole: UserRole | null = null
+  let existingApplication: ProjectApplication | null = null
+
+  if (user) {
+    const { data: profile } = await db
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+    userRole = (profile?.role as UserRole) || null
+
+    if (userRole === 'engineer') {
+      const { data: engineerProfile } = await db
+        .from('engineer_profiles')
+        .select('id')
+        .eq('profile_id', user.id)
+        .maybeSingle()
+
+      if (engineerProfile) {
+        const { data: appData } = await db
+          .from('project_applications')
+          .select('*')
+          .eq('project_id', project.id)
+          .eq('engineer_profile_id', engineerProfile.id)
+          .maybeSingle()
+        existingApplication = (appData as ProjectApplication) || null
+      }
+    }
+  }
 
   let engineerName: string | null = null
   let engineerProfileId: string | null = null
@@ -126,6 +165,11 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
     }
   }
 
+  const isEligible =
+    project.is_published &&
+    project.engineer_profile_id === null &&
+    (project.status === 'planned' || project.status === 'in_progress')
+
   const startDate = formatDate(project.start_date)
   const endDate = formatDate(project.end_date)
   const timeline = startDate && endDate
@@ -138,10 +182,10 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
 
   return (
     <div className="ch-section py-8 sm:py-12">
-      <div className="ch-container max-w-4xl">
+      <div className="ch-container max-w-4xl space-y-8">
         <Link
           href="/projects"
-          className="inline-flex items-center gap-2 text-sm text-[var(--color-ch-text-secondary)] hover:text-[var(--color-ch-navy)] transition-colors mb-8"
+          className="inline-flex items-center gap-2 text-sm text-[var(--color-ch-text-secondary)] hover:text-[var(--color-ch-navy)] transition-colors"
         >
           <ArrowLeft size={16} />
           Back to Projects
@@ -157,7 +201,22 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
               <span className="ch-badge bg-[var(--color-ch-orange)] text-white">
                 {STATUS_LABELS[project.status]}
               </span>
+
+              {isEligible ? (
+                <span className="ch-badge bg-emerald-500 text-white gap-1 font-semibold">
+                  <UserPlus size={12} /> Accepting Engineer Applications
+                </span>
+              ) : project.engineer_profile_id ? (
+                <span className="ch-badge bg-blue-500 text-white gap-1 font-semibold">
+                  <UserCheck size={12} /> Engineer Assigned
+                </span>
+              ) : (
+                <span className="ch-badge bg-slate-500 text-white font-semibold">
+                  Applications Closed
+                </span>
+              )}
             </div>
+
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight mb-4">
               {project.title}
             </h1>
@@ -206,7 +265,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
               <div className="p-4 rounded-lg bg-[var(--color-ch-surface)] border border-[var(--color-ch-border)]">
                 <div className="flex items-center gap-2 text-xs text-[var(--color-ch-text-muted)] mb-1">
                   <FolderKanban size={14} />
-                  Project status
+                  Project Status
                 </div>
                 <div className="font-semibold text-sm text-[var(--color-ch-navy)]">
                   {STATUS_LABELS[project.status]}
@@ -219,12 +278,12 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                 <div className="flex items-center gap-3">
                   <BadgeCheck size={20} className="text-[var(--color-ch-green)] shrink-0" />
                   <div>
-                    <div className="text-xs text-[var(--color-ch-text-muted)]">Published by</div>
+                    <div className="text-xs text-[var(--color-ch-text-muted)]">Assigned Engineer</div>
                     <div className="font-semibold text-sm text-[var(--color-ch-navy)]">{engineerName}</div>
                   </div>
                 </div>
                 <Link href={`/engineers/${engineerProfileId}`} className="text-xs font-medium text-[var(--color-ch-orange)] hover:underline">
-                  View engineer
+                  View engineer profile
                 </Link>
               </div>
             )}
@@ -239,6 +298,14 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
             </div>
           </div>
         </article>
+
+        {/* Engineer Application Section */}
+        <ProjectApplicationForm
+          projectId={project.id}
+          isEligible={isEligible}
+          userRole={userRole}
+          existingApplication={existingApplication}
+        />
       </div>
     </div>
   )

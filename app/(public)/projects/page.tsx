@@ -15,6 +15,7 @@ export default async function ProjectsPage() {
   const { data, error } = await supabase
     .from('projects')
     .select('*')
+    .eq('is_published', true)
     .order('end_date', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
 

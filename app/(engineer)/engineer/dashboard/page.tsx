@@ -54,8 +54,7 @@ export default async function EngineerDashboardPage() {
     .maybeSingle()
   const engineerProfile = engineerProfileData as Database['public']['Tables']['engineer_profiles']['Row'] | null
 
-  // Project visibility is intentionally governed by the existing public RLS
-  // policy. This association query cannot expose unpublished/private rows.
+  // Fetch assigned projects
   let projects: Database['public']['Tables']['projects']['Row'][] = []
   let projectsError = false
 
@@ -71,6 +70,7 @@ export default async function EngineerDashboardPage() {
     projectsError = Boolean(projectsQueryError)
   }
 
+  // Fetch Opportunity Applications
   let applications: Array<Database['public']['Tables']['opportunity_applications']['Row'] & { opportunity: Pick<Database['public']['Tables']['opportunities']['Row'], 'id' | 'title'> | null }> = []
   let applicationsError = false
   if (engineerProfile) {
@@ -81,6 +81,19 @@ export default async function EngineerDashboardPage() {
       .order('created_at', { ascending: false })
     applications = applicationsData ?? []
     applicationsError = Boolean(applicationsQueryError)
+  }
+
+  // Fetch Project Applications
+  let projectApplications: Array<Database['public']['Tables']['project_applications']['Row'] & { project: Pick<Database['public']['Tables']['projects']['Row'], 'id' | 'title' | 'client_name'> | null }> = []
+  let projectApplicationsError = false
+  if (engineerProfile) {
+    const { data: projAppData, error: projAppQueryError } = await (supabase as any)
+      .from('project_applications')
+      .select('*, project:projects(id, title, client_name)')
+      .eq('engineer_profile_id', engineerProfile.id)
+      .order('created_at', { ascending: false })
+    projectApplications = projAppData ?? []
+    projectApplicationsError = Boolean(projAppQueryError)
   }
 
   const [opportunitiesResult, resourcesResult] = await Promise.all([
@@ -127,6 +140,8 @@ export default async function EngineerDashboardPage() {
           projectsError={projectsError}
           applications={applications}
           applicationsError={applicationsError}
+          projectApplications={projectApplications}
+          projectApplicationsError={projectApplicationsError}
           summaryError={summaryError}
         />
       </div>

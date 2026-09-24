@@ -14,7 +14,7 @@ import {
   CheckCircle,
   PauseCircle,
   HelpCircle,
-  Building2,
+  Users,
 } from 'lucide-react'
 import type { Database } from '@/types/database'
 
@@ -56,6 +56,7 @@ export default async function ClientProjectsPage() {
   // Fetch all projects owned by this client
   let projectsData: any[] | null = null
   let error: any = null
+  const appCounts: Record<string, number> = {}
 
   if (clientProfileId) {
     const res = await (supabase as any)
@@ -65,6 +66,20 @@ export default async function ClientProjectsPage() {
       .order('created_at', { ascending: false })
     projectsData = res.data
     error = res.error
+
+    if (projectsData && projectsData.length > 0) {
+      const projectIds = projectsData.map((p: any) => p.id)
+      const { data: apps } = await (supabase as any)
+        .from('project_applications')
+        .select('project_id')
+        .in('project_id', projectIds)
+
+      if (apps) {
+        apps.forEach((a: any) => {
+          appCounts[a.project_id] = (appCounts[a.project_id] || 0) + 1
+        })
+      }
+    }
   }
 
   const projects = (projectsData ?? []) as ProjectRow[]
@@ -109,7 +124,7 @@ export default async function ClientProjectsPage() {
             My Civil Projects
           </h1>
           <p className="text-sm text-[var(--color-ch-text-secondary)] mt-1">
-            Manage your civil engineering projects, publish directory listings, and track progress.
+            Manage your civil engineering projects, publish directory listings, and review engineer applicants.
           </p>
         </div>
         <Link
@@ -169,83 +184,98 @@ export default async function ClientProjectsPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            {projects.map((project: ProjectRow) => (
-              <div
-                key={project.id}
-                className="ch-card p-6 hover:border-[var(--color-ch-orange)]/40 transition-all space-y-4 group"
-              >
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                  <div className="space-y-2 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="ch-badge bg-slate-100 text-slate-700 text-xs font-medium">
-                        {project.project_type}
-                      </span>
-                      {getStatusBadge(project.status)}
-                      {project.is_published ? (
-                        <span className="ch-badge bg-emerald-50 text-emerald-700 border-emerald-200 inline-flex items-center gap-1 text-xs">
-                          <Eye className="w-3 h-3" /> Public
+            {projects.map((project: ProjectRow) => {
+              const count = appCounts[project.id] || 0
+
+              return (
+                <div
+                  key={project.id}
+                  className="ch-card p-6 hover:border-[var(--color-ch-orange)]/40 transition-all space-y-4 group"
+                >
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div className="space-y-2 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="ch-badge bg-slate-100 text-slate-700 text-xs font-medium">
+                          {project.project_type}
                         </span>
-                      ) : (
-                        <span className="ch-badge bg-slate-100 text-slate-600 border-slate-200 inline-flex items-center gap-1 text-xs">
-                          <EyeOff className="w-3 h-3" /> Draft
-                        </span>
-                      )}
+                        {getStatusBadge(project.status)}
+                        {project.is_published ? (
+                          <span className="ch-badge bg-emerald-50 text-emerald-700 border-emerald-200 inline-flex items-center gap-1 text-xs">
+                            <Eye className="w-3 h-3" /> Public
+                          </span>
+                        ) : (
+                          <span className="ch-badge bg-slate-100 text-slate-600 border-slate-200 inline-flex items-center gap-1 text-xs">
+                            <EyeOff className="w-3 h-3" /> Draft
+                          </span>
+                        )}
+                        {count > 0 && (
+                          <span className="ch-badge bg-blue-50 text-blue-700 border-blue-200 inline-flex items-center gap-1 text-xs font-semibold">
+                            <Users className="w-3 h-3" /> {count} Applicant{count === 1 ? '' : 's'}
+                          </span>
+                        )}
+                      </div>
+
+                      <h2 className="text-xl font-bold text-[var(--color-ch-navy)] group-hover:text-[var(--color-ch-orange)] transition-colors">
+                        {project.title}
+                      </h2>
+
+                      <p className="text-sm text-[var(--color-ch-text-secondary)] line-clamp-2">
+                        {project.description}
+                      </p>
                     </div>
 
-                    <h2 className="text-xl font-bold text-[var(--color-ch-navy)] group-hover:text-[var(--color-ch-orange)] transition-colors">
-                      {project.title}
-                    </h2>
-
-                    <p className="text-sm text-[var(--color-ch-text-secondary)] line-clamp-2">
-                      {project.description}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0 self-end md:self-start pt-2 md:pt-0">
-                    {project.is_published && (
+                    <div className="flex flex-wrap items-center gap-2 shrink-0 self-end md:self-start pt-2 md:pt-0">
                       <Link
-                        href={`/projects/${project.id}`}
-                        target="_blank"
-                        className="ch-btn ch-btn-outline text-xs px-3 py-1.5 inline-flex items-center gap-1.5"
+                        href={`/client/projects/${project.id}/applications`}
+                        className="ch-btn ch-btn-outline text-xs px-3 py-1.5 inline-flex items-center gap-1.5 text-blue-700 border-blue-200 hover:bg-blue-50"
                       >
-                        <Eye className="w-3.5 h-3.5" /> View Public
+                        <Users className="w-3.5 h-3.5" /> Applicants ({count})
                       </Link>
+                      {project.is_published && (
+                        <Link
+                          href={`/projects/${project.id}`}
+                          target="_blank"
+                          className="ch-btn ch-btn-outline text-xs px-3 py-1.5 inline-flex items-center gap-1.5"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> View Public
+                        </Link>
+                      )}
+                      <Link
+                        href={`/client/projects/${project.id}`}
+                        className="ch-btn ch-btn-primary text-xs px-3.5 py-1.5 inline-flex items-center gap-1.5"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" /> Edit Project
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Metadata Row */}
+                  <div className="flex flex-wrap items-center gap-y-2 gap-x-6 text-xs text-[var(--color-ch-text-secondary)] pt-3 border-t border-[var(--color-ch-border)]/60">
+                    {project.location && (
+                      <span className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-[var(--color-ch-orange)]" />
+                        {project.location}
+                      </span>
                     )}
-                    <Link
-                      href={`/client/projects/${project.id}`}
-                      className="ch-btn ch-btn-primary text-xs px-3.5 py-1.5 inline-flex items-center gap-1.5"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" /> Edit Project
-                    </Link>
+                    {project.start_date && (
+                      <span className="flex items-center gap-1.5">
+                        <CalendarDays className="w-3.5 h-3.5 text-slate-400" />
+                        Start: {new Date(project.start_date).toLocaleDateString()}
+                      </span>
+                    )}
+                    {project.end_date && (
+                      <span className="flex items-center gap-1.5">
+                        <CalendarDays className="w-3.5 h-3.5 text-slate-400" />
+                        Target: {new Date(project.end_date).toLocaleDateString()}
+                      </span>
+                    )}
+                    <span className="ml-auto text-slate-400">
+                      Created {new Date(project.created_at).toLocaleDateString()}
+                    </span>
                   </div>
                 </div>
-
-                {/* Metadata Row */}
-                <div className="flex flex-wrap items-center gap-y-2 gap-x-6 text-xs text-[var(--color-ch-text-secondary)] pt-3 border-t border-[var(--color-ch-border)]/60">
-                  {project.location && (
-                    <span className="flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-[var(--color-ch-orange)]" />
-                      {project.location}
-                    </span>
-                  )}
-                  {project.start_date && (
-                    <span className="flex items-center gap-1.5">
-                      <CalendarDays className="w-3.5 h-3.5 text-slate-400" />
-                      Start: {new Date(project.start_date).toLocaleDateString()}
-                    </span>
-                  )}
-                  {project.end_date && (
-                    <span className="flex items-center gap-1.5">
-                      <CalendarDays className="w-3.5 h-3.5 text-slate-400" />
-                      Target: {new Date(project.end_date).toLocaleDateString()}
-                    </span>
-                  )}
-                  <span className="ml-auto text-slate-400">
-                    Created {new Date(project.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}

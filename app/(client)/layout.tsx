@@ -12,12 +12,16 @@ import {
   Users,
   Briefcase,
   BookOpen,
+  MessageSquare,
+  Bell,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/client/dashboard', icon: LayoutDashboard },
   { label: 'Profile', href: '/client/profile', icon: User },
   { label: 'My Projects', href: '/client/projects', icon: FolderKanban },
+  { label: 'Messages', href: '/client/messages', icon: MessageSquare },
+  { label: 'Notifications', href: '/client/notifications', icon: Bell },
 ]
 
 const EXPLORE_ITEMS = [

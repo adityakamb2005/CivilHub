@@ -9,6 +9,8 @@ export type Opportunity = Database['public']['Tables']['opportunities']['Row']
 export type OpportunityApplication = Database['public']['Tables']['opportunity_applications']['Row']
 export type ProjectApplication = Database['public']['Tables']['project_applications']['Row']
 export type Project = Database['public']['Tables']['projects']['Row']
+export type Conversation = Database['public']['Tables']['conversations']['Row']
+export type Message = Database['public']['Tables']['messages']['Row']
 
 export type UserRole = 'engineer' | 'client' | 'admin'
 

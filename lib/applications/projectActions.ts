@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createInAppNotification } from '@/lib/notifications/internalNotifications'
 
 export type ApplicationActionState = { error?: string; success?: string }
 
@@ -19,8 +20,10 @@ function isUuid(val: string): boolean {
 
 function revalidateProjectPaths(projectId?: string) {
   revalidatePath('/engineer/dashboard')
+  revalidatePath('/engineer/notifications')
   revalidatePath('/client/dashboard')
   revalidatePath('/client/projects')
+  revalidatePath('/client/notifications')
   revalidatePath('/projects')
   if (projectId) {
     revalidatePath(`/projects/${projectId}`)
@@ -61,7 +64,7 @@ export async function submitProjectApplication(
 
   const { data: profile } = await db
     .from('profiles')
-    .select('role')
+    .select('role, full_name')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -82,7 +85,7 @@ export async function submitProjectApplication(
   // Check project eligibility
   const { data: project } = await db
     .from('projects')
-    .select('id, is_published, status, engineer_profile_id')
+    .select('id, title, is_published, status, engineer_profile_id, client_profile_id')
     .eq('id', projectId)
     .maybeSingle()
 
@@ -108,6 +111,26 @@ export async function submitProjectApplication(
       return { error: 'You have already submitted an application for this project.' }
     }
     return { error: 'Your project application could not be submitted. Please try again.' }
+  }
+
+  // Trigger Notification to Client owner
+  if (project.client_profile_id) {
+    const { data: clientProfile } = await db
+      .from('client_profiles')
+      .select('profile_id')
+      .eq('id', project.client_profile_id)
+      .maybeSingle()
+
+    if (clientProfile?.profile_id) {
+      const applicantName = profile.full_name || 'An engineer'
+      await createInAppNotification({
+        profileId: clientProfile.profile_id,
+        type: 'project_application',
+        title: 'New project application',
+        body: `${applicantName} submitted an application for "${project.title}".`,
+        link: `/client/projects/${projectId}/applications`,
+      })
+    }
   }
 
   revalidateProjectPaths(projectId)
@@ -172,7 +195,7 @@ export async function acceptProjectApplication(
   // Verify project ownership by client
   const { data: project } = await db
     .from('projects')
-    .select('id, client_profile_id')
+    .select('id, title, client_profile_id')
     .eq('id', projectId)
     .maybeSingle()
 
@@ -180,7 +203,7 @@ export async function acceptProjectApplication(
     return
   }
 
-  // Get application engineer_profile_id
+  // Get target application engineer_profile_id
   const { data: application } = await db
     .from('project_applications')
     .select('id, engineer_profile_id, status')
@@ -189,6 +212,14 @@ export async function acceptProjectApplication(
     .maybeSingle()
 
   if (!application || application.status === 'withdrawn') return
+
+  // Fetch competing pending applications before updating
+  const { data: competingApps } = await db
+    .from('project_applications')
+    .select('id, engineer_profile:engineer_profiles(profile_id)')
+    .eq('project_id', projectId)
+    .neq('id', applicationId)
+    .eq('status', 'pending')
 
   // 1. Assign engineer to project
   const { error: assignError } = await db
@@ -212,6 +243,39 @@ export async function acceptProjectApplication(
     .eq('project_id', projectId)
     .neq('id', applicationId)
     .eq('status', 'pending')
+
+  // 4. Notify accepted engineer
+  const { data: acceptedEngineer } = await db
+    .from('engineer_profiles')
+    .select('profile_id')
+    .eq('id', application.engineer_profile_id)
+    .maybeSingle()
+
+  if (acceptedEngineer?.profile_id) {
+    await createInAppNotification({
+      profileId: acceptedEngineer.profile_id,
+      type: 'application_accepted',
+      title: 'Application Accepted!',
+      body: `Your project application for "${project.title}" was accepted. You are now assigned to this project.`,
+      link: '/engineer/dashboard',
+    })
+  }
+
+  // 5. Notify competing rejected engineers
+  if (competingApps && competingApps.length > 0) {
+    for (const compApp of competingApps) {
+      const compUserId = compApp.engineer_profile?.profile_id
+      if (compUserId && compUserId !== acceptedEngineer?.profile_id) {
+        await createInAppNotification({
+          profileId: compUserId,
+          type: 'application_rejected',
+          title: 'Project Application Status',
+          body: `Applications for "${project.title}" have closed.`,
+          link: '/engineer/dashboard',
+        })
+      }
+    }
+  }
 
   revalidateProjectPaths(projectId)
 }
@@ -240,7 +304,7 @@ export async function rejectProjectApplication(
   // Verify project ownership
   const { data: project } = await db
     .from('projects')
-    .select('id, client_profile_id')
+    .select('id, title, client_profile_id')
     .eq('id', projectId)
     .maybeSingle()
 
@@ -248,12 +312,30 @@ export async function rejectProjectApplication(
     return
   }
 
+  // Get application engineer details
+  const { data: application } = await db
+    .from('project_applications')
+    .select('id, engineer_profile:engineer_profiles(profile_id)')
+    .eq('id', applicationId)
+    .eq('project_id', projectId)
+    .maybeSingle()
+
   await db
     .from('project_applications')
     .update({ status: 'rejected' })
     .eq('id', applicationId)
     .eq('project_id', projectId)
     .eq('status', 'pending')
+
+  if (application?.engineer_profile?.profile_id) {
+    await createInAppNotification({
+      profileId: application.engineer_profile.profile_id,
+      type: 'application_rejected',
+      title: 'Your project application was not selected',
+      body: `Your application for "${project.title}" was not selected.`,
+      link: '/engineer/dashboard',
+    })
+  }
 
   revalidateProjectPaths(projectId)
 }

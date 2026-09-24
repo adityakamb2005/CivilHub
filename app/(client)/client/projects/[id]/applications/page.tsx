@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import type { Database } from '@/types/database'
 import { ClientApplicationActions } from '@/components/applications/ClientApplicationActions'
+import { StartConversationButton } from '@/components/messaging/StartConversationButton'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -251,7 +252,12 @@ export default async function ClientProjectApplicationsPage({ params }: PageProp
                       </div>
                     </div>
 
-                    <div className="shrink-0 self-start sm:self-auto">
+                    <div className="shrink-0 self-start sm:self-auto flex flex-wrap items-center gap-2">
+                      <StartConversationButton
+                        projectId={projectId}
+                        engineerProfileId={engProfile?.id || ''}
+                        userRole="client"
+                      />
                       <ClientApplicationActions
                         projectId={projectId}
                         applicationId={app.id}

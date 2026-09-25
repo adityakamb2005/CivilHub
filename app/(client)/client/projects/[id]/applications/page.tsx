@@ -81,6 +81,8 @@ export default async function ClientProjectApplicationsPage({ params }: PageProp
         headline,
         specialization,
         years_experience,
+        skills,
+        is_available,
         visibility,
         profiles (
           id,
@@ -249,6 +251,16 @@ export default async function ClientProjectApplicationsPage({ params }: PageProp
                             <Clock size={12} /> Submitted {new Date(app.created_at).toLocaleDateString()}
                           </span>
                         </div>
+
+                        {engProfile?.skills && engProfile.skills.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                            {engProfile.skills.slice(0, 5).map((sk: string) => (
+                              <span key={sk} className="ch-badge bg-slate-100 text-slate-700 text-[10px]">
+                                {sk}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
 

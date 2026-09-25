@@ -96,6 +96,16 @@ export default async function EngineerDashboardPage() {
     projectApplicationsError = Boolean(projAppQueryError)
   }
 
+  // Fetch portfolio entries count
+  let portfolioCount = 0
+  if (engineerProfile) {
+    const { count } = await (supabase as any)
+      .from('engineer_portfolios')
+      .select('*', { count: 'exact', head: true })
+      .eq('engineer_profile_id', engineerProfile.id)
+    portfolioCount = count || 0
+  }
+
   const [opportunitiesResult, resourcesResult] = await Promise.all([
     supabase.from('opportunities').select('*', { count: 'exact', head: true }),
     supabase.from('resources').select('*', { count: 'exact', head: true }),
@@ -115,6 +125,7 @@ export default async function EngineerDashboardPage() {
           <ProfileCompletionCard 
             profile={profile} 
             engineerProfile={engineerProfile} 
+            portfolioCount={portfolioCount}
           />
           <QuickActions profileId={engineerProfile ? user.id : undefined} />
         </div>

@@ -16,7 +16,10 @@ import {
   AlertCircle, 
   Loader2, 
   HardHat,
-  ArrowRight
+  ArrowRight,
+  GraduationCap,
+  Award,
+  CalendarCheck
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -51,6 +54,7 @@ export function ProfileEditorForm({
   const [fullName, setFullName] = useState(profile.full_name || '')
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || '')
   const [location, setLocation] = useState(profile.location || '')
+  const [phone, setPhone] = useState(profile.phone || '')
 
   const [title, setTitle] = useState(engineerProfile?.title || '')
   const [specialization, setSpecialization] = useState<SpecializationType | ''>(
@@ -62,10 +66,28 @@ export function ProfileEditorForm({
       : ''
   )
   const [about, setAbout] = useState(engineerProfile?.about || '')
+  const [isAvailable, setIsAvailable] = useState<boolean>(
+    engineerProfile?.is_available ?? true
+  )
   const [websiteUrl, setWebsiteUrl] = useState(engineerProfile?.website_url || '')
   const [linkedinUrl, setLinkedinUrl] = useState(engineerProfile?.linkedin_url || '')
   const [visibility, setVisibility] = useState<'public' | 'private'>(
     engineerProfile?.visibility || 'public'
+  )
+
+  const [skills, setSkills] = useState<string>(
+    (engineerProfile as any)?.skills?.join(', ') || ''
+  )
+
+  // JSON fields
+  const [educationList, setEducationList] = useState<any[]>(
+    (engineerProfile as any)?.education || []
+  )
+  const [certificationsList, setCertificationsList] = useState<any[]>(
+    (engineerProfile as any)?.certifications || []
+  )
+  const [workList, setWorkList] = useState<any[]>(
+    (engineerProfile as any)?.work_experience || []
   )
 
   // Status State
@@ -117,7 +139,6 @@ export function ProfileEditorForm({
     setSaving(true)
 
     try {
-      // Note: Manual Phase 1 database types require explicit client query builder casting for mutation overloads
       const db = supabase as any
 
       // 1. Update profiles table
@@ -127,11 +148,17 @@ export function ProfileEditorForm({
           full_name: fullName.trim(),
           avatar_url: avatarUrl.trim() || null,
           location: location.trim() || null,
+          phone: phone.trim() || null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', profile.id)
 
       if (pErr) throw pErr
+
+      // Parse skills array
+      const parsedSkills = skills
+        ? skills.split(',').map((s) => s.trim()).filter(Boolean)
+        : []
 
       // 2. Upsert engineer_profiles table
       const engData = {
@@ -139,9 +166,14 @@ export function ProfileEditorForm({
         specialization: specialization || null,
         about: about.trim() || null,
         years_experience: yearsExperience !== '' ? Number(yearsExperience) : null,
+        is_available: isAvailable,
         visibility,
         website_url: websiteUrl.trim() || null,
         linkedin_url: linkedinUrl.trim() || null,
+        skills: parsedSkills,
+        education: educationList,
+        certifications: certificationsList,
+        work_experience: workList,
         updated_at: new Date().toISOString(),
       }
 
@@ -163,7 +195,7 @@ export function ProfileEditorForm({
         if (eErr) throw eErr
       }
 
-      setSuccessMsg('Your profile has been saved successfully!')
+      setSuccessMsg('Your professional profile has been updated successfully!')
       router.refresh()
     } catch (err: unknown) {
       console.error('Error saving profile:', err)
@@ -172,6 +204,31 @@ export function ProfileEditorForm({
     } finally {
       setSaving(false)
     }
+  }
+
+  // Dynamic Item Helper Handlers
+  const addEdu = () => setEducationList([...educationList, { degree: '', institution: '', field_of_study: '', end_year: '' }])
+  const removeEdu = (idx: number) => setEducationList(educationList.filter((_, i) => i !== idx))
+  const updateEdu = (idx: number, key: string, val: string) => {
+    const next = [...educationList]
+    next[idx] = { ...next[idx], [key]: val }
+    setEducationList(next)
+  }
+
+  const addCert = () => setCertificationsList([...certificationsList, { title: '', issuing_organization: '', issue_date: '' }])
+  const removeCert = (idx: number) => setCertificationsList(certificationsList.filter((_, i) => i !== idx))
+  const updateCert = (idx: number, key: string, val: string) => {
+    const next = [...certificationsList]
+    next[idx] = { ...next[idx], [key]: val }
+    setCertificationsList(next)
+  }
+
+  const addWork = () => setWorkList([...workList, { position_title: '', company_name: '', location: '', start_date: '', end_date: '', description: '' }])
+  const removeWork = (idx: number) => setWorkList(workList.filter((_, i) => i !== idx))
+  const updateWork = (idx: number, key: string, val: string) => {
+    const next = [...workList]
+    next[idx] = { ...next[idx], [key]: val }
+    setWorkList(next)
   }
 
   return (
@@ -201,10 +258,10 @@ export function ProfileEditorForm({
       )}
 
       {/* Basic Information */}
-      <div className="ch-card p-6 space-y-4">
+      <div id="basic-info" className="ch-card p-6 space-y-4">
         <h2 className="text-lg font-bold text-[var(--color-ch-navy)] flex items-center gap-2 border-b border-[var(--color-ch-border-subtle)] pb-3">
           <User size={18} className="text-[var(--color-ch-orange)]" />
-          Basic Information
+          Basic Profile Information
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -216,7 +273,7 @@ export function ProfileEditorForm({
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="e.g. Sarah Jenkins"
+              placeholder="e.g. Sarah Jenkins, PE"
               className="ch-input"
               required
             />
@@ -230,7 +287,7 @@ export function ProfileEditorForm({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Lead Structural Engineer, PE"
+              placeholder="e.g. Senior Structural Engineer"
               className="ch-input"
               required
             />
@@ -240,20 +297,31 @@ export function ProfileEditorForm({
             <label className="block text-sm font-medium text-[var(--color-ch-text-primary)] mb-1">
               Location
             </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g. Chicago, IL or London, UK"
-                className="ch-input"
-              />
-            </div>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="e.g. Chicago, IL or London, UK"
+              className="ch-input"
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-[var(--color-ch-text-primary)] mb-1">
-              Profile Photo URL
+              Phone Number (Optional)
+            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+1 (555) 000-0000"
+              className="ch-input"
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-[var(--color-ch-text-primary)] mb-1">
+              Profile Photo Image URL
             </label>
             <input
               type="url"
@@ -283,24 +351,24 @@ export function ProfileEditorForm({
         )}
       </div>
 
-      {/* Professional Information */}
-      <div className="ch-card p-6 space-y-4">
+      {/* Professional Details & Bio */}
+      <div id="summary" className="ch-card p-6 space-y-4">
         <h2 className="text-lg font-bold text-[var(--color-ch-navy)] flex items-center gap-2 border-b border-[var(--color-ch-border-subtle)] pb-3">
           <HardHat size={18} className="text-[var(--color-ch-orange)]" />
-          Professional Details
+          Discipline & Bio
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-[var(--color-ch-text-primary)] mb-1">
-              Specialization
+              Engineering Discipline
             </label>
             <select
               value={specialization}
               onChange={(e) => setSpecialization(e.target.value as SpecializationType)}
               className="ch-input bg-white"
             >
-              <option value="">Select Specialization...</option>
+              <option value="">Select Discipline...</option>
               {SPECIALIZATION_OPTIONS.map((opt) => (
                 <option key={opt} value={opt}>
                   {opt}
@@ -325,25 +393,269 @@ export function ProfileEditorForm({
           </div>
         </div>
 
+        <div id="skills">
+          <label className="block text-sm font-medium text-[var(--color-ch-text-primary)] mb-1">
+            Technical Skills & Software Tools
+          </label>
+          <input
+            type="text"
+            value={skills}
+            onChange={(e) => setSkills(e.target.value)}
+            placeholder="e.g. AutoCAD, Revit, STAAD Pro, ETABS, Foundation Design, Site Supervision, Eurocodes"
+            className="ch-input"
+          />
+          <span className="text-[11px] text-[var(--color-ch-text-muted)] mt-1 block">
+            Comma-separated list of civil engineering skills and tools.
+          </span>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-[var(--color-ch-text-primary)] mb-1">
-            About / Professional Bio
+            Professional Summary / Overview
           </label>
           <textarea
-            rows={4}
+            rows={5}
             value={about}
             onChange={(e) => setAbout(e.target.value)}
             maxLength={1500}
-            placeholder="Summarize your engineering expertise, key project achievements, and professional background..."
-            className="ch-input resize-y"
+            placeholder="Summarize your engineering background, key structural project achievements, licensing, and client service approach..."
+            className="ch-input resize-y text-xs"
           />
           <div className="text-right text-xs text-[var(--color-ch-text-muted)] mt-1">
             {about.length}/1500 characters
           </div>
         </div>
+
+        {/* Availability Status */}
+        <div className="pt-2">
+          <label className="flex items-center gap-2.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isAvailable}
+              onChange={(e) => setIsAvailable(e.target.checked)}
+              className="w-4 h-4 rounded text-[var(--color-ch-orange)] focus:ring-[var(--color-ch-orange)] accent-[var(--color-ch-orange)]"
+            />
+            <span className="text-xs font-semibold text-[var(--color-ch-navy)] flex items-center gap-1.5">
+              <CalendarCheck size={14} className="text-emerald-600" />
+              Available for New Project Contracts & Opportunities
+            </span>
+          </label>
+        </div>
       </div>
 
-      {/* Online Presence */}
+      {/* Work Experience */}
+      <div id="experience" className="ch-card p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-[var(--color-ch-border-subtle)] pb-3">
+          <h2 className="text-lg font-bold text-[var(--color-ch-navy)] flex items-center gap-2">
+            <Briefcase size={18} className="text-[var(--color-ch-orange)]" />
+            Work History
+          </h2>
+          <button
+            type="button"
+            onClick={addWork}
+            className="ch-btn ch-btn-outline text-xs px-2.5 py-1 inline-flex items-center gap-1"
+          >
+            + Add Position
+          </button>
+        </div>
+
+        {workList.length === 0 ? (
+          <p className="text-xs text-[var(--color-ch-text-muted)] italic">
+            No work history positions added yet.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {workList.map((item, idx) => (
+              <div key={idx} className="p-4 rounded-lg border border-[var(--color-ch-border)] bg-[var(--color-ch-surface)] space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-xs text-[var(--color-ch-navy)]">
+                    Position #{idx + 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeWork(idx)}
+                    className="text-xs text-rose-600 hover:underline"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  <input
+                    type="text"
+                    placeholder="Position Title (e.g. Senior Project Manager)"
+                    value={item.position_title || ''}
+                    onChange={(e) => updateWork(idx, 'position_title', e.target.value)}
+                    className="ch-input"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Company / Firm Name"
+                    value={item.company_name || ''}
+                    onChange={(e) => updateWork(idx, 'company_name', e.target.value)}
+                    className="ch-input"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Start Date / Year (e.g. 2020)"
+                    value={item.start_date || ''}
+                    onChange={(e) => updateWork(idx, 'start_date', e.target.value)}
+                    className="ch-input"
+                  />
+                  <input
+                    type="text"
+                    placeholder="End Date / Year (or Present)"
+                    value={item.end_date || ''}
+                    onChange={(e) => updateWork(idx, 'end_date', e.target.value)}
+                    className="ch-input"
+                  />
+                  <textarea
+                    rows={2}
+                    placeholder="Description of responsibilities and projects managed..."
+                    value={item.description || ''}
+                    onChange={(e) => updateWork(idx, 'description', e.target.value)}
+                    className="ch-input md:col-span-2 resize-y"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Education & Certifications */}
+      <div id="education" className="ch-card p-6 space-y-6">
+        {/* Education */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-[var(--color-ch-border-subtle)] pb-3">
+            <h2 className="text-base font-bold text-[var(--color-ch-navy)] flex items-center gap-2">
+              <GraduationCap size={18} className="text-[var(--color-ch-orange)]" />
+              Education
+            </h2>
+            <button
+              type="button"
+              onClick={addEdu}
+              className="ch-btn ch-btn-outline text-xs px-2.5 py-1 inline-flex items-center gap-1"
+            >
+              + Add Education
+            </button>
+          </div>
+
+          {educationList.length === 0 ? (
+            <p className="text-xs text-[var(--color-ch-text-muted)] italic">
+              No education entries added yet.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {educationList.map((item, idx) => (
+                <div key={idx} className="p-3.5 rounded-lg border border-[var(--color-ch-border)] bg-[var(--color-ch-surface)] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-xs text-[var(--color-ch-navy)]">
+                      Degree / Qualification #{idx + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeEdu(idx)}
+                      className="text-xs text-rose-600 hover:underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+                    <input
+                      type="text"
+                      placeholder="Degree (e.g. B.S. Civil Engineering)"
+                      value={item.degree || ''}
+                      onChange={(e) => updateEdu(idx, 'degree', e.target.value)}
+                      className="ch-input"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Institution / University"
+                      value={item.institution || ''}
+                      onChange={(e) => updateEdu(idx, 'institution', e.target.value)}
+                      className="ch-input"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Graduation Year (e.g. 2018)"
+                      value={item.end_year || ''}
+                      onChange={(e) => updateEdu(idx, 'end_year', e.target.value)}
+                      className="ch-input"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Certifications */}
+        <div className="space-y-4 pt-2">
+          <div className="flex items-center justify-between border-b border-[var(--color-ch-border-subtle)] pb-3">
+            <h2 className="text-base font-bold text-[var(--color-ch-navy)] flex items-center gap-2">
+              <Award size={18} className="text-[var(--color-ch-orange)]" />
+              Certifications & Engineering Licenses
+            </h2>
+            <button
+              type="button"
+              onClick={addCert}
+              className="ch-btn ch-btn-outline text-xs px-2.5 py-1 inline-flex items-center gap-1"
+            >
+              + Add Certification
+            </button>
+          </div>
+
+          {certificationsList.length === 0 ? (
+            <p className="text-xs text-[var(--color-ch-text-muted)] italic">
+              No certifications added yet.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {certificationsList.map((item, idx) => (
+                <div key={idx} className="p-3.5 rounded-lg border border-[var(--color-ch-border)] bg-[var(--color-ch-surface)] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-xs text-[var(--color-ch-navy)]">
+                      License / Certification #{idx + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeCert(idx)}
+                      className="text-xs text-rose-600 hover:underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+                    <input
+                      type="text"
+                      placeholder="Title (e.g. Licensed Professional Engineer PE)"
+                      value={item.title || ''}
+                      onChange={(e) => updateCert(idx, 'title', e.target.value)}
+                      className="ch-input"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Issuing Organization (e.g. NCEES)"
+                      value={item.issuing_organization || ''}
+                      onChange={(e) => updateCert(idx, 'issuing_organization', e.target.value)}
+                      className="ch-input"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Issue Date / Year"
+                      value={item.issue_date || ''}
+                      onChange={(e) => updateCert(idx, 'issue_date', e.target.value)}
+                      className="ch-input"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Online Links */}
       <div className="ch-card p-6 space-y-4">
         <h2 className="text-lg font-bold text-[var(--color-ch-navy)] flex items-center gap-2 border-b border-[var(--color-ch-border-subtle)] pb-3">
           <Globe size={18} className="text-[var(--color-ch-orange)]" />
@@ -355,30 +667,26 @@ export function ProfileEditorForm({
             <label className="block text-sm font-medium text-[var(--color-ch-text-primary)] mb-1">
               Website URL
             </label>
-            <div className="relative">
-              <input
-                type="url"
-                value={websiteUrl}
-                onChange={(e) => setWebsiteUrl(e.target.value)}
-                placeholder="https://yourwebsite.com"
-                className="ch-input"
-              />
-            </div>
+            <input
+              type="url"
+              value={websiteUrl}
+              onChange={(e) => setWebsiteUrl(e.target.value)}
+              placeholder="https://yourwebsite.com"
+              className="ch-input"
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-[var(--color-ch-text-primary)] mb-1">
               LinkedIn Profile URL
             </label>
-            <div className="relative">
-              <input
-                type="url"
-                value={linkedinUrl}
-                onChange={(e) => setLinkedinUrl(e.target.value)}
-                placeholder="https://linkedin.com/in/username"
-                className="ch-input"
-              />
-            </div>
+            <input
+              type="url"
+              value={linkedinUrl}
+              onChange={(e) => setLinkedinUrl(e.target.value)}
+              placeholder="https://linkedin.com/in/username"
+              className="ch-input"
+            />
           </div>
         </div>
       </div>
@@ -413,7 +721,7 @@ export function ProfileEditorForm({
                 Public Profile
               </div>
               <p className="text-xs text-[var(--color-ch-text-secondary)] mt-0.5">
-                Visible to registered clients and structural project managers on CivilHub.
+                Visible in public directory and to clients on CivilHub.
               </p>
             </div>
           </label>
@@ -440,7 +748,7 @@ export function ProfileEditorForm({
                 Private Profile
               </div>
               <p className="text-xs text-[var(--color-ch-text-secondary)] mt-0.5">
-                Hidden from public searches. Only visible to you in your dashboard workspace.
+                Hidden from public searches. Only visible in your dashboard workspace.
               </p>
             </div>
           </label>

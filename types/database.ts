@@ -58,6 +58,10 @@ export interface Database {
           is_available: boolean
           website_url: string | null
           linkedin_url: string | null
+          skills: string[] | null
+          education: Json | null
+          certifications: Json | null
+          work_experience: Json | null
           created_at: string
           updated_at: string
         }
@@ -74,6 +78,10 @@ export interface Database {
           is_available?: boolean
           website_url?: string | null
           linkedin_url?: string | null
+          skills?: string[] | null
+          education?: Json | null
+          certifications?: Json | null
+          work_experience?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -90,6 +98,52 @@ export interface Database {
           is_available?: boolean
           website_url?: string | null
           linkedin_url?: string | null
+          skills?: string[] | null
+          education?: Json | null
+          certifications?: Json | null
+          work_experience?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      engineer_portfolios: {
+        Row: {
+          id: string
+          engineer_profile_id: string
+          title: string
+          short_description: string
+          detailed_description: string | null
+          skills: string[] | null
+          project_date: string | null
+          project_url: string | null
+          image_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          engineer_profile_id: string
+          title: string
+          short_description: string
+          detailed_description?: string | null
+          skills?: string[] | null
+          project_date?: string | null
+          project_url?: string | null
+          image_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          engineer_profile_id?: string
+          title?: string
+          short_description?: string
+          detailed_description?: string | null
+          skills?: string[] | null
+          project_date?: string | null
+          project_url?: string | null
+          image_url?: string | null
           created_at?: string
           updated_at?: string
         }

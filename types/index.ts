@@ -11,6 +11,33 @@ export type ProjectApplication = Database['public']['Tables']['project_applicati
 export type Project = Database['public']['Tables']['projects']['Row']
 export type Conversation = Database['public']['Tables']['conversations']['Row']
 export type Message = Database['public']['Tables']['messages']['Row']
+export type EngineerPortfolio = Database['public']['Tables']['engineer_portfolios']['Row']
+
+export interface EducationItem {
+  degree: string
+  institution: string
+  field_of_study?: string
+  start_year?: string
+  end_year?: string
+}
+
+export interface CertificationItem {
+  title: string
+  issuing_organization: string
+  issue_date?: string
+  credential_id?: string
+  credential_url?: string
+}
+
+export interface WorkExperienceItem {
+  position_title: string
+  company_name: string
+  location?: string
+  start_date?: string
+  end_date?: string
+  is_current?: boolean
+  description?: string
+}
 
 export type UserRole = 'engineer' | 'client' | 'admin'
 

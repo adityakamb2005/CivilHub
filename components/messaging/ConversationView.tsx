@@ -44,7 +44,9 @@ export function ConversationView({
 
   // Mark unread messages as read upon entering conversation
   useEffect(() => {
-    markConversationMessagesAsRead(conversationId)
+    startTransition(() => {
+      markConversationMessagesAsRead(conversationId)
+    })
   }, [conversationId])
 
   const handleSend = (e: React.FormEvent) => {
@@ -141,7 +143,7 @@ export function ConversationView({
                     <span className="font-semibold">{isSelf ? 'You' : participantName}</span>
                     <span>·</span>
                     <span>
-                      {new Date(msg.created_at).toLocaleTimeString(undefined, {
+                      {new Date(msg.created_at).toLocaleTimeString('en-US', {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}

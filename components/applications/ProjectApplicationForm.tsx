@@ -124,7 +124,7 @@ export function ProjectApplicationForm({
             {existingApplication.cover_message}
           </p>
           <span className="text-[11px] text-[var(--color-ch-text-muted)] block">
-            Submitted on {new Date(existingApplication.created_at).toLocaleDateString()}
+            Submitted on {new Date(existingApplication.created_at).toLocaleDateString('en-US')}
           </span>
         </div>
 

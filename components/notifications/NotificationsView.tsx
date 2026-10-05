@@ -107,7 +107,7 @@ export function NotificationsView({
                 )}
 
                 <span className="text-[11px] text-[var(--color-ch-text-muted)] block">
-                  {new Date(n.created_at).toLocaleDateString(undefined, {
+                  {new Date(n.created_at).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
                     year: 'numeric',

@@ -148,7 +148,7 @@ export function InboxView({
               <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 text-xs text-[var(--color-ch-text-muted)] pt-2 sm:pt-0 border-t sm:border-t-0 border-[var(--color-ch-border-subtle)]">
                 <span className="inline-flex items-center gap-1">
                   <Clock size={13} />
-                  {new Date(conv.last_message_at).toLocaleDateString(undefined, {
+                  {new Date(conv.last_message_at).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
                     hour: '2-digit',

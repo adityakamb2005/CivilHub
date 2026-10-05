@@ -320,7 +320,7 @@ export function PortfolioManager({
                 <div className="flex items-center gap-4 text-xs text-[var(--color-ch-text-muted)] ml-auto">
                   {item.project_date && (
                     <span className="inline-flex items-center gap-1">
-                      <Calendar size={13} /> {new Date(item.project_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short' })}
+                      <Calendar size={13} /> {new Date(item.project_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })}
                     </span>
                   )}
                   {item.project_url && (

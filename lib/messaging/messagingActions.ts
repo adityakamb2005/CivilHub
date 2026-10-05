@@ -47,11 +47,22 @@ export async function getOrCreateConversation(
     .eq('id', project.client_profile_id)
     .maybeSingle()
 
-  const { data: engineerProfile } = await db
+  let { data: engineerProfile } = await db
     .from('engineer_profiles')
     .select('id, profile_id')
     .eq('id', engineerProfileId)
     .maybeSingle()
+
+  if (!engineerProfile) {
+    const { data: engByProfile } = await db
+      .from('engineer_profiles')
+      .select('id, profile_id')
+      .eq('profile_id', engineerProfileId)
+      .maybeSingle()
+    if (engByProfile) {
+      engineerProfile = engByProfile
+    }
+  }
 
   if (!clientProfile || !engineerProfile) {
     return { error: 'Participant profiles not found.' }
@@ -183,8 +194,15 @@ export async function sendMessage(
     return { error: 'Conversation not found.' }
   }
 
-  const clientProfileUser = conv.client_profile?.profile_id
-  const engineerProfileUser = conv.engineer_profile?.profile_id
+  const clientProfileObj = Array.isArray(conv.client_profile)
+    ? conv.client_profile[0]
+    : conv.client_profile
+  const engineerProfileObj = Array.isArray(conv.engineer_profile)
+    ? conv.engineer_profile[0]
+    : conv.engineer_profile
+
+  const clientProfileUser = clientProfileObj?.profile_id
+  const engineerProfileUser = engineerProfileObj?.profile_id
 
   const isClient = clientProfileUser === user.id
   const isEngineer = engineerProfileUser === user.id
@@ -231,15 +249,18 @@ export async function markConversationMessagesAsRead(conversationId: string) {
 
   const now = new Date().toISOString()
 
-  await db
+  const { data, error } = await db
     .from('messages')
     .update({ read_at: now })
     .eq('conversation_id', conversationId)
     .neq('sender_profile_id', user.id)
     .is('read_at', null)
+    .select('id')
 
-  revalidatePath(`/client/messages/${conversationId}`)
-  revalidatePath(`/engineer/messages/${conversationId}`)
-  revalidatePath('/client/messages')
-  revalidatePath('/engineer/messages')
+  if (!error && data && data.length > 0) {
+    revalidatePath(`/client/messages/${conversationId}`)
+    revalidatePath(`/engineer/messages/${conversationId}`)
+    revalidatePath('/client/messages')
+    revalidatePath('/engineer/messages')
+  }
 }

@@ -67,8 +67,10 @@ export default async function EngineerConversationPage({ params }: PageProps) {
     return <MessagingUnavailable migrationMissing={missingMessagingSchema(messagesError)} />
   }
 
-  const clientUser = conv.client_profile?.profiles
-  const clientCompany = conv.client_profile?.company
+  const clientProfile = Array.isArray(conv.client_profile) ? conv.client_profile[0] : conv.client_profile
+  const clientUser = Array.isArray(clientProfile?.profiles) ? clientProfile?.profiles[0] : clientProfile?.profiles
+  const proj = Array.isArray(conv.project) ? conv.project[0] : conv.project
+  const clientCompany = clientProfile?.company
   const participantName = clientUser?.full_name || clientCompany || 'Client Project Owner'
 
   const initialMessages: MessageItem[] = (rawMsgs || []).map((m: any) => ({
@@ -85,7 +87,7 @@ export default async function EngineerConversationPage({ params }: PageProps) {
     <ConversationView
       conversationId={conversationId}
       projectId={conv.project_id}
-      projectTitle={conv.project?.title || 'Civil Project'}
+      projectTitle={proj?.title || 'Civil Project'}
       participantName={participantName}
       participantRole="Client"
       currentUserId={user.id}

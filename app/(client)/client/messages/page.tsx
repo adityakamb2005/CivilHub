@@ -54,8 +54,10 @@ export default async function ClientMessagesPage() {
     .order('updated_at', { ascending: false })
 
   const conversations: ConversationItem[] = (rawConvs || []).map((c: any) => {
-    const engUser = c.engineer_profile?.profiles
-    const engHeadline = c.engineer_profile?.headline || c.engineer_profile?.specialization
+    const engProfile = Array.isArray(c.engineer_profile) ? c.engineer_profile[0] : c.engineer_profile
+    const engUser = Array.isArray(engProfile?.profiles) ? engProfile?.profiles[0] : engProfile?.profiles
+    const proj = Array.isArray(c.project) ? c.project[0] : c.project
+    const engHeadline = engProfile?.headline || engProfile?.specialization
     const participantName = engUser?.full_name || engHeadline || 'Civil Engineer'
 
     const msgs = (c.messages || []).sort(
@@ -69,7 +71,7 @@ export default async function ClientMessagesPage() {
     return {
       id: c.id,
       project_id: c.project_id,
-      project_title: c.project?.title || 'Civil Project',
+      project_title: proj?.title || 'Civil Project',
       participant_name: participantName,
       participant_role: 'Engineer',
       participant_avatar: engUser?.avatar_url,

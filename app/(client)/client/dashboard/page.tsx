@@ -81,9 +81,9 @@ export default async function ClientDashboardPage() {
     <div className="max-w-6xl mx-auto">
       <ClientDashboardHeader name={profile.full_name} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid min-w-0 grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content Column */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="min-w-0 lg:col-span-2 space-y-6">
           <ClientProfileCompletionCard
             profile={profile}
             clientProfile={clientProfile}
@@ -92,25 +92,25 @@ export default async function ClientDashboardPage() {
         </div>
 
         {/* Sidebar Column */}
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <div className="ch-card p-6">
             <h3 className="text-sm font-bold text-[var(--color-ch-navy)] mb-4 uppercase tracking-wider">Profile Summary</h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
+            <div className="min-w-0 space-y-3">
+              <div className="flex min-w-0 items-center justify-between gap-3 text-sm">
                 <span className="text-[var(--color-ch-text-secondary)]">Name</span>
-                <span className="font-medium text-[var(--color-ch-navy)] truncate ml-4">{profile.full_name || '—'}</span>
+                <span className="ml-4 min-w-0 max-w-[65%] break-words text-right font-medium text-[var(--color-ch-navy)]">{profile.full_name || '—'}</span>
               </div>
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex min-w-0 items-center justify-between gap-3 text-sm">
                 <span className="text-[var(--color-ch-text-secondary)]">Company</span>
-                <span className="font-medium text-[var(--color-ch-navy)] truncate ml-4">{clientProfile?.company || '—'}</span>
+                <span className="ml-4 min-w-0 max-w-[65%] break-words text-right font-medium text-[var(--color-ch-navy)]">{clientProfile?.company || '—'}</span>
               </div>
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex min-w-0 items-center justify-between gap-3 text-sm">
                 <span className="text-[var(--color-ch-text-secondary)]">Location</span>
-                <span className="font-medium text-[var(--color-ch-navy)] truncate ml-4">{profile.location || '—'}</span>
+                <span className="ml-4 min-w-0 max-w-[65%] break-words text-right font-medium text-[var(--color-ch-navy)]">{profile.location || '—'}</span>
               </div>
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex min-w-0 items-center justify-between gap-3 text-sm">
                 <span className="text-[var(--color-ch-text-secondary)]">Phone</span>
-                <span className="font-medium text-[var(--color-ch-navy)] truncate ml-4">{profile.phone || '—'}</span>
+                <span className="ml-4 min-w-0 max-w-[65%] break-words text-right font-medium text-[var(--color-ch-navy)]">{profile.phone || '—'}</span>
               </div>
             </div>
           </div>

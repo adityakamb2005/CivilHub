@@ -119,9 +119,9 @@ export default async function EngineerDashboardPage() {
     <div className="max-w-6xl mx-auto">
       <DashboardHeader name={profile.full_name} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid min-w-0 grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content Column */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="min-w-0 lg:col-span-2 space-y-6">
           <ProfileCompletionCard 
             profile={profile} 
             engineerProfile={engineerProfile} 
@@ -131,7 +131,7 @@ export default async function EngineerDashboardPage() {
         </div>
 
         {/* Sidebar Column */}
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <ProfilePreview 
             profile={profile} 
             engineerProfile={engineerProfile} 

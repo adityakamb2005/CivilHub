@@ -25,9 +25,9 @@ export function ProfileStatusCard({
       </h2>
       
       <div className="space-y-4 flex-1">
-        <div className="flex items-center justify-between pb-3 border-b border-[var(--color-ch-border-subtle)]">
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 pb-3 border-b border-[var(--color-ch-border-subtle)]">
           <span className="text-sm text-[var(--color-ch-text-secondary)]">Visibility</span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex min-w-0 items-center gap-1.5">
             {engineerProfile.visibility === 'public' ? (
               <>
                 <Eye size={14} className="text-[var(--color-ch-green)]" />
@@ -42,9 +42,9 @@ export function ProfileStatusCard({
           </div>
         </div>
 
-        <div className="flex items-center justify-between pb-3 border-b border-[var(--color-ch-border-subtle)]">
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 pb-3 border-b border-[var(--color-ch-border-subtle)]">
           <span className="text-sm text-[var(--color-ch-text-secondary)]">Verification</span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex min-w-0 items-center gap-1.5">
             {engineerProfile.is_verified ? (
               <>
                 <BadgeCheck size={14} className="text-[var(--color-ch-green)]" />
@@ -59,14 +59,14 @@ export function ProfileStatusCard({
           </div>
         </div>
 
-        <div className="flex items-center justify-between pb-3 border-b border-[var(--color-ch-border-subtle)]">
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 pb-3 border-b border-[var(--color-ch-border-subtle)]">
           <span className="text-sm text-[var(--color-ch-text-secondary)]">Specialization</span>
-          <span className="text-sm font-medium text-[var(--color-ch-text-primary)] text-right">
+          <span className="min-w-0 max-w-full break-words text-sm font-medium text-[var(--color-ch-text-primary)] text-right">
             {engineerProfile.specialization || <span className="text-[var(--color-ch-text-muted)]">Not set</span>}
           </span>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <span className="text-sm text-[var(--color-ch-text-secondary)]">Experience</span>
           <span className="text-sm font-medium text-[var(--color-ch-text-primary)]">
             {engineerProfile.years_experience !== null ? `${engineerProfile.years_experience} Years` : <span className="text-[var(--color-ch-text-muted)]">Not set</span>}

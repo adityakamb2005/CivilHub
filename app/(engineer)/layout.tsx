@@ -16,7 +16,7 @@ import {
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/engineer/dashboard', icon: LayoutDashboard },
   { label: 'Profile', href: '/engineer/profile', icon: User },
-  { label: 'Projects', href: '/projects', icon: FolderKanban },
+  { label: 'Projects', href: '/engineer/projects', icon: FolderKanban },
   { label: 'Messages', href: '/engineer/messages', icon: MessageSquare },
   { label: 'Notifications', href: '/engineer/notifications', icon: Bell },
 ]

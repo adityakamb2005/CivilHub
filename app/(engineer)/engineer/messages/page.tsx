@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { InboxView, ConversationItem } from '@/components/messaging/InboxView'
+import { missingMessagingSchema } from '@/lib/messaging/messagingErrors'
 
 export const metadata = {
   title: 'Engineer Messages | CivilHub',
@@ -34,7 +35,7 @@ export default async function EngineerMessagesPage() {
   if (!engineerProfile) redirect('/engineer/dashboard')
 
   // Fetch conversations involving this engineer profile
-  const { data: rawConvs } = await db
+  const { data: rawConvs, error: conversationsError } = await db
     .from('conversations')
     .select(`
       id,
@@ -77,5 +78,5 @@ export default async function EngineerMessagesPage() {
     }
   })
 
-  return <InboxView conversations={conversations} role="engineer" />
+  return <InboxView conversations={conversations} role="engineer" loadError={conversationsError ? (missingMessagingSchema(conversationsError) ? 'migration' : 'generic') : null} />
 }

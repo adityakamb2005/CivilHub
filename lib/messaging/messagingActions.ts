@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import { createInAppNotification } from '@/lib/notifications/internalNotifications'
+import { missingMessagingSchema } from '@/lib/messaging/messagingErrors'
 
 function isUuid(val: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val)
@@ -87,13 +87,18 @@ export async function getOrCreateConversation(
   }
 
   // Check if conversation already exists
-  const { data: existingConv } = await db
+  const { data: existingConv, error: existingError } = await db
     .from('conversations')
     .select('id')
     .eq('project_id', projectId)
     .eq('client_profile_id', clientProfile.id)
     .eq('engineer_profile_id', engineerProfile.id)
     .maybeSingle()
+
+  if (missingMessagingSchema(existingError)) {
+    return { error: 'Messaging is not configured yet. A project administrator must apply database migration 011 and the current messaging security migration.' }
+  }
+  if (existingError) return { error: 'Could not check for an existing conversation. Please try again.' }
 
   if (existingConv) {
     return { conversationId: existingConv.id }
@@ -111,6 +116,19 @@ export async function getOrCreateConversation(
     .single()
 
   if (createError || !newConv) {
+    if (createError?.code === '23505') {
+      const { data: racedConversation } = await db
+        .from('conversations')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('client_profile_id', clientProfile.id)
+        .eq('engineer_profile_id', engineerProfile.id)
+        .maybeSingle()
+      if (racedConversation) return { conversationId: racedConversation.id }
+    }
+    if (missingMessagingSchema(createError)) {
+      return { error: 'Messaging is not configured yet. A project administrator must apply database migration 011 and the current messaging security migration.' }
+    }
     return { error: 'Failed to create conversation. Please try again.' }
   }
 
@@ -144,19 +162,22 @@ export async function sendMessage(
   }
 
   // Fetch conversation and participant profiles
-  const { data: conv } = await db
+  const { data: conv, error: conversationError } = await db
     .from('conversations')
     .select(
       `
       id,
       project_id,
       client_profile:client_profiles(id, profile_id),
-      engineer_profile:engineer_profiles(id, profile_id),
-      project:projects(title)
+      engineer_profile:engineer_profiles(id, profile_id)
     `
     )
     .eq('id', conversationId)
     .maybeSingle()
+
+  if (missingMessagingSchema(conversationError)) {
+    return { error: 'Messaging is not configured yet. A project administrator must apply database migration 011 and the current messaging security migration.' }
+  }
 
   if (!conv) {
     return { error: 'Conversation not found.' }
@@ -180,35 +201,18 @@ export async function sendMessage(
   })
 
   if (insertError) {
+    if (missingMessagingSchema(insertError)) {
+      return { error: 'Messaging is not configured yet. A project administrator must apply database migration 011 and the current messaging security migration.' }
+    }
     return { error: 'Could not send message. Please try again.' }
-  }
-
-  // Touch conversation updated_at
-  await db
-    .from('conversations')
-    .update({ updated_at: new Date().toISOString() })
-    .eq('id', conversationId)
-
-  // Identify recipient user ID
-  const recipientUserId = isClient ? engineerProfileUser : clientProfileUser
-  const recipientRole = isClient ? 'engineer' : 'client'
-  const messagePreview = body.length > 60 ? `${body.slice(0, 60)}...` : body
-  const projectTitle = conv.project?.title || 'Project'
-
-  if (recipientUserId) {
-    await createInAppNotification({
-      profileId: recipientUserId,
-      type: 'new_message',
-      title: `New message regarding ${projectTitle}`,
-      body: messagePreview,
-      link: `/${recipientRole}/messages/${conversationId}`,
-    })
   }
 
   revalidatePath(`/client/messages/${conversationId}`)
   revalidatePath(`/engineer/messages/${conversationId}`)
   revalidatePath('/client/messages')
   revalidatePath('/engineer/messages')
+  revalidatePath('/client/notifications')
+  revalidatePath('/engineer/notifications')
 
   return { success: 'Message sent.' }
 }

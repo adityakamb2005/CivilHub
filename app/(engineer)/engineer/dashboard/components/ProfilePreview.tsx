@@ -61,10 +61,10 @@ export function ProfilePreview({
       <div className="pt-14 pb-6 px-6 flex-1 flex flex-col">
         <div className="mb-4 flex justify-between items-start">
           <div>
-            <h2 className="text-xl font-bold text-[var(--color-ch-navy)]">
+            <h2 className="min-w-0 break-words text-xl font-bold text-[var(--color-ch-navy)]">
               {displayName}
             </h2>
-            <p className="text-sm font-medium text-[var(--color-ch-orange)]">
+            <p className="min-w-0 break-words text-sm font-medium text-[var(--color-ch-orange)]">
               {engineerProfile.title || 'Civil Engineer'}
             </p>
           </div>
@@ -76,11 +76,11 @@ export function ProfilePreview({
         <div className="space-y-3 mb-6">
           <div className="flex items-center gap-2 text-sm text-[var(--color-ch-text-secondary)]">
             <MapPin size={16} className="text-[var(--color-ch-text-muted)]" />
-            <span>{profile?.location || 'Location not specified'}</span>
+            <span className="min-w-0 break-words">{profile?.location || 'Location not specified'}</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-[var(--color-ch-text-secondary)]">
             <HardHat size={16} className="text-[var(--color-ch-text-muted)]" />
-            <span>{engineerProfile.specialization || 'Specialization not specified'}</span>
+            <span className="min-w-0 break-words">{engineerProfile.specialization || 'Specialization not specified'}</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-[var(--color-ch-text-secondary)]">
             <Briefcase size={16} className="text-[var(--color-ch-text-muted)]" />
@@ -94,7 +94,7 @@ export function ProfilePreview({
 
         <div className="mt-auto">
           <h3 className="text-sm font-semibold text-[var(--color-ch-navy)] mb-2">About</h3>
-          <p className="text-sm text-[var(--color-ch-text-secondary)] line-clamp-3">
+          <p className="break-words text-sm text-[var(--color-ch-text-secondary)] line-clamp-3">
             {engineerProfile.about || 'No description provided.'}
           </p>
         </div>

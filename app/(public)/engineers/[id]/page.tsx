@@ -24,6 +24,7 @@ import {
 
 type Profile = Database['public']['Tables']['profiles']['Row']
 type EngineerProfile = Database['public']['Tables']['engineer_profiles']['Row']
+type CivilHubProject = Pick<Database['public']['Tables']['projects']['Row'], 'id' | 'title' | 'description' | 'project_type' | 'location' | 'status'>
 
 interface Props {
   params: Promise<{ id: string }>
@@ -108,6 +109,22 @@ export default async function PublicEngineerProfilePage({ params }: Props) {
     .order('created_at', { ascending: false })
 
   const portfolioItems: EngineerPortfolio[] = (rawPortfolio || []) as EngineerPortfolio[]
+
+  // Only published CivilHub projects assigned to this public engineer belong in this section.
+  const { data: rawProjects, error: projectsError } = await db
+    .from('projects')
+    .select('id, title, description, project_type, location, status')
+    .eq('engineer_profile_id', engineerProfile.id)
+    .eq('is_published', true)
+    .order('published_at', { ascending: false, nullsFirst: false })
+  const civilHubProjects = (rawProjects || []) as CivilHubProject[]
+
+  const projectStatus: Record<CivilHubProject['status'], string> = {
+    planned: 'Planned',
+    in_progress: 'In progress',
+    completed: 'Completed',
+    on_hold: 'On hold',
+  }
 
   const displayName = profile.full_name || 'Civil Engineer'
   const skillsList: string[] = (engineerProfile as any).skills || []
@@ -202,9 +219,9 @@ export default async function PublicEngineerProfilePage({ params }: Props) {
         </div>
 
         {/* Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid min-w-0 grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Column */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="min-w-0 lg:col-span-2 space-y-8">
             {/* About Section */}
             <div className="ch-card p-6 sm:p-8 space-y-4">
               <h2 className="text-lg font-bold text-[var(--color-ch-navy)] flex items-center gap-2 border-b border-[var(--color-ch-border-subtle)] pb-3">
@@ -238,6 +255,37 @@ export default async function PublicEngineerProfilePage({ params }: Props) {
                 </div>
               </div>
             )}
+
+            {/* CivilHub Projects */}
+            <section className="ch-card min-w-0 p-6 sm:p-8 space-y-5" aria-labelledby="civilhub-projects-heading">
+              <h2 id="civilhub-projects-heading" className="text-lg font-bold text-[var(--color-ch-navy)] flex items-center gap-2 border-b border-[var(--color-ch-border-subtle)] pb-3">
+                <FolderKanban size={18} className="text-[var(--color-ch-orange)]" />
+                CivilHub Projects ({civilHubProjects.length})
+              </h2>
+
+              {projectsError ? (
+                <p className="text-xs text-[var(--color-ch-text-muted)]">CivilHub project details are unavailable right now.</p>
+              ) : civilHubProjects.length === 0 ? (
+                <p className="text-xs text-[var(--color-ch-text-muted)] italic">No publicly listed CivilHub projects are assigned to this engineer yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {civilHubProjects.map((project) => (
+                    <Link key={project.id} href={`/projects/${project.id}`} className="block min-w-0 rounded-xl border border-[var(--color-ch-border)] bg-[var(--color-ch-surface)] p-5 transition-colors hover:border-[var(--color-ch-orange)]/50">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <h3 className="min-w-0 break-words font-bold text-base text-[var(--color-ch-navy)]">{project.title}</h3>
+                        <span className="ch-badge ch-badge-navy shrink-0">{projectStatus[project.status]}</span>
+                      </div>
+                      <p className="mt-2 break-words whitespace-pre-line text-xs leading-relaxed text-[var(--color-ch-text-secondary)]">{project.description}</p>
+                      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--color-ch-text-muted)]">
+                        <span>{project.project_type}</span>
+                        {project.location && <span className="inline-flex items-center gap-1"><MapPin size={12} />{project.location}</span>}
+                        <span className="ml-auto inline-flex items-center gap-1 text-[var(--color-ch-orange)]">View project <ExternalLink size={12} /></span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </section>
 
             {/* Engineering Portfolio Projects */}
             <div className="ch-card p-6 sm:p-8 space-y-5">

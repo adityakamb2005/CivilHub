@@ -89,8 +89,8 @@ export function ClientProjectsSummary({
       )}
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="ch-card p-5 flex flex-col min-h-[178px]">
+      <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="ch-card min-w-0 p-5 flex flex-col min-h-[178px]">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-ch-text-muted)]">
               My projects
@@ -109,7 +109,7 @@ export function ClientProjectsSummary({
           </Link>
         </div>
 
-        <div className="ch-card p-5 flex flex-col min-h-[178px]">
+        <div className="ch-card min-w-0 p-5 flex flex-col min-h-[178px]">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-ch-text-muted)]">
               Published
@@ -128,7 +128,7 @@ export function ClientProjectsSummary({
           </Link>
         </div>
 
-        <div className="ch-card p-5 flex flex-col min-h-[178px]">
+        <div className="ch-card min-w-0 p-5 flex flex-col min-h-[178px]">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-ch-text-muted)]">
               Open opportunities
@@ -147,7 +147,7 @@ export function ClientProjectsSummary({
           </Link>
         </div>
 
-        <div className="ch-card p-5 flex flex-col min-h-[178px]">
+        <div className="ch-card min-w-0 p-5 flex flex-col min-h-[178px]">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-ch-text-muted)]">
               Resources

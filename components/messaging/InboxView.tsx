@@ -19,9 +19,11 @@ export interface ConversationItem {
 export function InboxView({
   conversations,
   role,
+  loadError,
 }: {
   conversations: ConversationItem[]
   role: 'client' | 'engineer'
+  loadError?: 'migration' | 'generic' | null
 }) {
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -52,8 +54,19 @@ export function InboxView({
         </div>
       </div>
 
+      {loadError && (
+        <div role="alert" className="ch-card p-6 text-sm text-[var(--color-ch-red)]">
+          <h2 className="font-bold">{loadError === 'migration' ? 'Messaging database setup is incomplete' : 'Conversations could not be loaded'}</h2>
+          <p className="mt-2 text-[var(--color-ch-text-secondary)]">
+            {loadError === 'migration'
+              ? 'Apply Supabase migrations 011 (messaging and notifications) and 013 (project messaging security) before using messaging.'
+              : 'Please refresh and try again. If the problem continues, contact the CivilHub administrator.'}
+          </p>
+        </div>
+      )}
+
       {/* Search Filter */}
-      {conversations.length > 0 && (
+      {!loadError && conversations.length > 0 && (
         <div className="relative max-w-md">
           <Search
             size={18}
@@ -70,7 +83,7 @@ export function InboxView({
       )}
 
       {/* Empty State */}
-      {conversations.length === 0 ? (
+      {loadError ? null : conversations.length === 0 ? (
         <div className="ch-card p-12 text-center max-w-xl mx-auto space-y-4 my-8">
           <div className="w-14 h-14 rounded-full bg-[var(--color-ch-orange)]/10 text-[var(--color-ch-orange)] flex items-center justify-center mx-auto">
             <MessageSquare size={28} />

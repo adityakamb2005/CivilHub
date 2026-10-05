@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { ConversationView, MessageItem } from '@/components/messaging/ConversationView'
+import { MessagingUnavailable } from '@/components/messaging/MessagingUnavailable'
+import { missingMessagingSchema } from '@/lib/messaging/messagingErrors'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -30,7 +32,7 @@ export default async function EngineerConversationPage({ params }: PageProps) {
   if (!engineerProfile) redirect('/engineer/dashboard')
 
   // Fetch conversation & ensure authorization
-  const { data: conv } = await db
+  const { data: conv, error: conversationError } = await db
     .from('conversations')
     .select(`
       id,
@@ -46,16 +48,24 @@ export default async function EngineerConversationPage({ params }: PageProps) {
     .eq('id', conversationId)
     .maybeSingle()
 
+  if (conversationError) {
+    return <MessagingUnavailable migrationMissing={missingMessagingSchema(conversationError)} />
+  }
+
   if (!conv || conv.engineer_profile_id !== engineerProfile.id) {
     notFound()
   }
 
   // Fetch messages thread
-  const { data: rawMsgs } = await db
+  const { data: rawMsgs, error: messagesError } = await db
     .from('messages')
     .select('*')
     .eq('conversation_id', conversationId)
     .order('created_at', { ascending: true })
+
+  if (messagesError) {
+    return <MessagingUnavailable migrationMissing={missingMessagingSchema(messagesError)} />
+  }
 
   const clientUser = conv.client_profile?.profiles
   const clientCompany = conv.client_profile?.company

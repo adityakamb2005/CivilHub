@@ -9,7 +9,7 @@ export function QuickActions({ profileId }: { profileId?: string }) {
       <h2 className="text-lg font-bold text-[var(--color-ch-navy)] mb-4">
         Quick Actions
       </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
         <Link
           href="/engineer/profile"
           className="flex flex-col items-center justify-center p-4 rounded-lg border border-[var(--color-ch-border)] bg-[var(--color-ch-surface)] hover:border-[var(--color-ch-orange)] hover:bg-white transition-all text-center gap-2 group shadow-xs"

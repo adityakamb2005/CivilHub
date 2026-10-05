@@ -87,14 +87,14 @@ export function ConversationView({
           <ArrowLeft size={14} /> Back to Messages Inbox
         </Link>
 
-        <div className="ch-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 border-l-[var(--color-ch-orange)]">
-          <div className="flex items-center gap-3.5">
+        <div className="ch-card min-w-0 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 border-l-[var(--color-ch-orange)]">
+          <div className="flex min-w-0 items-center gap-3.5">
             <div className="w-11 h-11 rounded-full bg-[var(--color-ch-navy)] text-white font-bold flex items-center justify-center shrink-0">
               {participantName.charAt(0).toUpperCase()}
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="font-bold text-base text-[var(--color-ch-navy)]">
+                <h1 className="break-words font-bold text-base text-[var(--color-ch-navy)]">
                   {participantName}
                 </h1>
                 <span className="ch-badge bg-slate-100 text-slate-700 text-xs">
@@ -103,7 +103,7 @@ export function ConversationView({
               </div>
               <div className="flex items-center gap-1.5 text-xs text-[var(--color-ch-text-secondary)] mt-0.5">
                 <FolderKanban size={13} className="text-[var(--color-ch-orange)] shrink-0" />
-                <span className="font-medium">{projectTitle}</span>
+                <span className="min-w-0 break-words font-medium">{projectTitle}</span>
               </div>
             </div>
           </div>
@@ -149,7 +149,7 @@ export function ConversationView({
                   </div>
 
                   <div
-                    className={`p-3.5 rounded-2xl max-w-lg text-xs leading-relaxed whitespace-pre-line ${
+                    className={`p-3.5 rounded-2xl max-w-[min(32rem,85%)] break-words text-xs leading-relaxed whitespace-pre-line ${
                       isSelf
                         ? 'bg-[var(--color-ch-navy)] text-white rounded-tr-none'
                         : 'bg-[var(--color-ch-surface)] text-[var(--color-ch-navy)] border border-[var(--color-ch-border)] rounded-tl-none'

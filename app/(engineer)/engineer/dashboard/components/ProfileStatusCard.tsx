@@ -10,7 +10,7 @@ export function ProfileStatusCard({
 }) {
   if (!engineerProfile) {
     return (
-      <div className="ch-card p-6 h-full flex flex-col items-center justify-center text-center animate-fade-in text-[var(--color-ch-text-muted)]">
+      <div className="ch-card p-6 flex flex-col items-center justify-center text-center animate-fade-in text-[var(--color-ch-text-muted)]">
         <ShieldAlert size={32} className="mb-2 opacity-50" />
         <p>No profile data available.</p>
         <p className="text-sm">Complete your setup to see status.</p>
@@ -19,7 +19,7 @@ export function ProfileStatusCard({
   }
 
   return (
-    <div className="ch-card p-6 flex flex-col h-full animate-fade-in">
+    <div className="ch-card p-6 flex flex-col animate-fade-in">
       <h2 className="text-lg font-bold text-[var(--color-ch-navy)] mb-4">
         Status Overview
       </h2>

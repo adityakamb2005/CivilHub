@@ -16,7 +16,7 @@ export function ProfilePreview({
 }) {
   if (!engineerProfile) {
     return (
-      <div className="ch-card p-8 flex flex-col items-center justify-center text-center animate-fade-in h-full bg-gradient-to-b from-white to-[var(--color-ch-surface)]">
+      <div className="ch-card p-8 flex flex-col items-center justify-center text-center animate-fade-in bg-gradient-to-b from-white to-[var(--color-ch-surface)]">
         <div className="w-16 h-16 bg-[var(--color-ch-orange-light)] rounded-full flex items-center justify-center mb-4">
           <HardHat size={28} className="text-[var(--color-ch-orange)]" />
         </div>
@@ -39,7 +39,7 @@ export function ProfilePreview({
   const displayName = profile?.full_name || 'Engineer'
   
   return (
-    <div className="ch-card overflow-hidden animate-fade-in h-full flex flex-col">
+    <div className="ch-card overflow-hidden animate-fade-in flex flex-col">
       <div className="h-24 bg-gradient-to-r from-[var(--color-ch-navy)] to-[var(--color-ch-charcoal)] relative">
         <div className="absolute -bottom-10 left-6">
           <div className="w-20 h-20 bg-white rounded-full p-1 shadow-md">

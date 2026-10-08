@@ -80,7 +80,7 @@ export function ProfileCompletionCard({
   const missingSections = sections.filter((s) => !s.completed)
 
   return (
-    <div className="ch-card p-6 flex flex-col h-full animate-fade-in">
+    <div className="ch-card p-6 flex flex-col animate-fade-in">
       <div className="flex items-start justify-between mb-4">
         <div>
           <h2 className="text-lg font-bold text-[var(--color-ch-navy)] mb-1">

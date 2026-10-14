@@ -96,3 +96,15 @@ npm.cmd run start
 ```
 
 The development server starts at `http://localhost:3000` by default.
+
+### Share with devices on your LAN
+
+Connect your laptop and the other devices to the same Wi-Fi or LAN, then run:
+
+```powershell
+npm.cmd run dev -- --hostname 0.0.0.0 --port 3000
+```
+
+Keep the server running and your laptop awake. Find your laptop's Wi-Fi or Ethernet IPv4 address with `ipconfig`, then open `http://<your-ipv4-address>:3000` in the other device's browser (for example, `http://192.168.14.46:3000`). Your local IP can change when you reconnect. On your laptop, `http://localhost:3000` also works.
+
+If the other device cannot connect, allow Node.js through Windows Firewall for your trusted Private network. Guest Wi-Fi or router client isolation can also prevent devices from reaching each other. This setup is for a trusted local network; router port forwarding is unnecessary.

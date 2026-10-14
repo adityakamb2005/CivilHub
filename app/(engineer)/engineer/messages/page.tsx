@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { InboxView, ConversationItem } from '@/components/messaging/InboxView'
@@ -26,13 +27,41 @@ export default async function EngineerMessagesPage() {
 
   if (!profile || profile.role !== 'engineer') redirect('/')
 
-  const { data: engineerProfile } = await db
+  const { data: engineerProfile, error: engineerProfileError } = await db
     .from('engineer_profiles')
     .select('id')
     .eq('profile_id', user.id)
     .maybeSingle()
 
-  if (!engineerProfile) redirect('/engineer/dashboard')
+  if (engineerProfileError) {
+    return (
+      <div className="ch-card p-8" role="alert">
+        <h1 className="text-xl font-bold text-[var(--color-ch-navy)] mb-2">
+          Messages are temporarily unavailable
+        </h1>
+        <p className="text-sm text-[var(--color-ch-text-secondary)]">
+          We couldn't load your engineer profile. Please refresh the page to try again.
+        </p>
+      </div>
+    )
+  }
+
+  if (!engineerProfile) {
+    return (
+      <div className="ch-card p-8">
+        <h1 className="text-xl font-bold text-[var(--color-ch-navy)] mb-2">
+          Complete your engineer profile
+        </h1>
+        <p className="text-sm text-[var(--color-ch-text-secondary)] mb-6">
+          Save your engineer profile to access messages with clients associated
+          with your project applications.
+        </p>
+        <Link href="/engineer/profile" className="ch-btn ch-btn-primary">
+          Set Up Engineer Profile
+        </Link>
+      </div>
+    )
+  }
 
   // Fetch conversations involving this engineer profile
   const { data: rawConvs, error: conversationsError } = await db

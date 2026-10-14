@@ -1,6 +1,7 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { InboxView, ConversationItem } from '@/components/messaging/InboxView'
+import { InboxView, type ConversationItem } from '@/components/messaging/InboxView'
 import { missingMessagingSchema } from '@/lib/messaging/messagingErrors'
 
 export const metadata = {
@@ -26,13 +27,41 @@ export default async function ClientMessagesPage() {
 
   if (!profile || profile.role !== 'client') redirect('/')
 
-  const { data: clientProfile } = await db
+  const { data: clientProfile, error: clientProfileError } = await db
     .from('client_profiles')
     .select('id')
     .eq('profile_id', user.id)
     .maybeSingle()
 
-  if (!clientProfile) redirect('/client/dashboard')
+  if (clientProfileError) {
+    return (
+      <div className="ch-card p-8" role="alert">
+        <h1 className="text-xl font-bold text-[var(--color-ch-navy)] mb-2">
+          Messages are temporarily unavailable
+        </h1>
+        <p className="text-sm text-[var(--color-ch-text-secondary)]">
+          We couldn’t load your client profile. Please refresh the page to try again.
+        </p>
+      </div>
+    )
+  }
+
+  if (!clientProfile) {
+    return (
+      <div className="ch-card p-8">
+        <h1 className="text-xl font-bold text-[var(--color-ch-navy)] mb-2">
+          Complete your client profile
+        </h1>
+        <p className="text-sm text-[var(--color-ch-text-secondary)] mb-6">
+          Save your client profile to access messages with engineers associated
+          with your projects.
+        </p>
+        <Link href="/client/profile" className="ch-btn ch-btn-primary">
+          Set Up Client Profile
+        </Link>
+      </div>
+    )
+  }
 
   // Fetch conversations for client profile
   const { data: rawConvs, error: conversationsError } = await db
@@ -54,15 +83,23 @@ export default async function ClientMessagesPage() {
     .order('updated_at', { ascending: false })
 
   const conversations: ConversationItem[] = (rawConvs || []).map((c: any) => {
-    const engProfile = Array.isArray(c.engineer_profile) ? c.engineer_profile[0] : c.engineer_profile
-    const engUser = Array.isArray(engProfile?.profiles) ? engProfile?.profiles[0] : engProfile?.profiles
+    const engProfile = Array.isArray(c.engineer_profile)
+      ? c.engineer_profile[0]
+      : c.engineer_profile
+
+    const engUser = Array.isArray(engProfile?.profiles)
+      ? engProfile.profiles[0]
+      : engProfile?.profiles
+
     const proj = Array.isArray(c.project) ? c.project[0] : c.project
     const engHeadline = engProfile?.headline || engProfile?.specialization
     const participantName = engUser?.full_name || engHeadline || 'Civil Engineer'
 
     const msgs = (c.messages || []).sort(
-      (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      (a: any, b: any) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     )
+
     const lastMsg = msgs[0]
     const unreadCount = (c.messages || []).filter(
       (m: any) => m.sender_profile_id !== user.id && !m.read_at
@@ -81,5 +118,17 @@ export default async function ClientMessagesPage() {
     }
   })
 
-  return <InboxView conversations={conversations} role="client" loadError={conversationsError ? (missingMessagingSchema(conversationsError) ? 'migration' : 'generic') : null} />
+  return (
+    <InboxView
+      conversations={conversations}
+      role="client"
+      loadError={
+        conversationsError
+          ? missingMessagingSchema(conversationsError)
+            ? 'migration'
+            : 'generic'
+          : null
+      }
+    />
+  )
 }

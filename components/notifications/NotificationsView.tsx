@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { Bell, Check, CheckCheck, ExternalLink, Inbox, Loader2 } from 'lucide-react'
 import { markNotificationRead, markAllNotificationsRead } from '@/lib/notifications/notificationActions'
@@ -19,23 +19,30 @@ export interface NotificationItem {
 export function NotificationsView({
   notifications,
   role,
+  loadError = false,
 }: {
   notifications: NotificationItem[]
   role: 'client' | 'engineer'
+  loadError?: boolean
 }) {
   const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
 
   const unreadCount = notifications.filter((n) => !n.is_read).length
 
   const handleMarkOne = (id: string) => {
     startTransition(async () => {
-      await markNotificationRead(id)
+      setError(null)
+      const result = await markNotificationRead(id)
+      setError(result.error || null)
     })
   }
 
   const handleMarkAll = () => {
     startTransition(async () => {
-      await markAllNotificationsRead()
+      setError(null)
+      const result = await markAllNotificationsRead()
+      setError(result.error || null)
     })
   }
 
@@ -67,7 +74,8 @@ export function NotificationsView({
       </div>
 
       {/* Empty State */}
-      {notifications.length === 0 ? (
+      {(loadError || error) && <div role="alert" className="ch-card p-5 text-sm text-[var(--color-ch-red)]">{loadError ? 'Notifications could not be loaded. Please refresh the page to try again.' : error}</div>}
+      {loadError ? null : notifications.length === 0 ? (
         <div className="ch-card p-12 text-center max-w-xl mx-auto space-y-4 my-8">
           <div className="w-14 h-14 rounded-full bg-[var(--color-ch-surface)] border border-[var(--color-ch-border)] text-[var(--color-ch-text-muted)] flex items-center justify-center mx-auto">
             <Inbox size={28} />

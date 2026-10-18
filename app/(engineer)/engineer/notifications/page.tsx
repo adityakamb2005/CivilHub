@@ -26,7 +26,7 @@ export default async function EngineerNotificationsPage() {
   if (!profile || profile.role !== 'engineer') redirect('/')
 
   // Fetch notifications for user
-  const { data: rawNotifs } = await db
+  const { data: rawNotifs, error: notificationsError } = await db
     .from('notifications')
     .select('*')
     .eq('profile_id', user.id)
@@ -43,5 +43,5 @@ export default async function EngineerNotificationsPage() {
     created_at: n.created_at,
   }))
 
-  return <NotificationsView notifications={notifications} role="engineer" />
+  return <NotificationsView notifications={notifications} role="engineer" loadError={Boolean(notificationsError)} />
 }

@@ -34,7 +34,7 @@ export function ConversationView({
   role: 'client' | 'engineer'
   initialMessages: MessageItem[]
 }) {
-  const [messages, setMessages] = useState<MessageItem[]>(initialMessages)
+  const messages = initialMessages
   const [text, setText] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -44,8 +44,9 @@ export function ConversationView({
 
   // Mark unread messages as read upon entering conversation
   useEffect(() => {
-    startTransition(() => {
-      markConversationMessagesAsRead(conversationId)
+    startTransition(async () => {
+      const result = await markConversationMessagesAsRead(conversationId)
+      if (result.error) setError(result.error)
     })
   }, [conversationId])
 
@@ -61,19 +62,6 @@ export function ConversationView({
         setError(res.error)
       } else {
         setText('')
-        // Optimistically add message
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `temp-${Date.now()}`,
-            conversation_id: conversationId,
-            sender_profile_id: currentUserId,
-            sender_name: 'You',
-            body,
-            created_at: new Date().toISOString(),
-            read_at: null,
-          },
-        ])
       }
     })
   }

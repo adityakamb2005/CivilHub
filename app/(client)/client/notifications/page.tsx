@@ -26,7 +26,7 @@ export default async function ClientNotificationsPage() {
   if (!profile || profile.role !== 'client') redirect('/')
 
   // Fetch notifications for user
-  const { data: rawNotifs } = await db
+  const { data: rawNotifs, error: notificationsError } = await db
     .from('notifications')
     .select('*')
     .eq('profile_id', user.id)
@@ -43,5 +43,5 @@ export default async function ClientNotificationsPage() {
     created_at: n.created_at,
   }))
 
-  return <NotificationsView notifications={notifications} role="client" />
+  return <NotificationsView notifications={notifications} role="client" loadError={Boolean(notificationsError)} />
 }

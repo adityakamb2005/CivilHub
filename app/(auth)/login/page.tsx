@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { safeRedirectPath } from '@/lib/auth/redirectPath'
 import { Loader2 } from 'lucide-react'
 
 function LoginForm() {
@@ -13,7 +14,7 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectUrl = searchParams.get('redirect') || '/'
+  const redirectUrl = safeRedirectPath(searchParams.get('redirect'))
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()

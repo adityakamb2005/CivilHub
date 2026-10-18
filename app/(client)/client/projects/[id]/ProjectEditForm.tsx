@@ -109,6 +109,9 @@ export function ProjectEditForm({ project }: ProjectEditFormProps) {
           updated_at: now,
         })
         .eq('id', project.id)
+        .eq('client_profile_id', project.client_profile_id)
+        .select('id')
+        .single()
 
       if (updateError) {
         throw updateError

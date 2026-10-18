@@ -169,18 +169,18 @@ export default async function ClientProjectApplicationsPage({ params }: PageProp
           <p className="text-sm text-[var(--color-ch-text-secondary)]">
             Civil engineers have not applied to this project yet. Ensure your project is published in the public directory so engineers can discover it.
           </p>
-          {project.is_published ? (
+          {project.is_published && !isAssigned && ['planned', 'in_progress'].includes(project.status) ? (
             <div className="p-3 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs inline-flex items-center gap-2">
               <UserCheck size={14} /> Project is currently Public & Accepting Applications
             </div>
-          ) : (
+          ) : !project.is_published ? (
             <Link
               href={`/client/projects/${projectId}`}
               className="ch-btn ch-btn-primary text-xs inline-flex items-center gap-1.5"
             >
               Publish Project to Public Directory
             </Link>
-          )}
+          ) : <p className="text-xs text-[var(--color-ch-text-secondary)]">This project is not currently accepting applications.</p>}
         </div>
       )}
 
@@ -267,14 +267,14 @@ export default async function ClientProjectApplicationsPage({ params }: PageProp
                     <div className="shrink-0 self-start sm:self-auto flex flex-wrap items-center gap-2">
                       <StartConversationButton
                         projectId={projectId}
-                        engineerProfileId={engProfile?.id || ''}
+                        engineerProfileId={app.engineer_profile_id}
                         userRole="client"
                       />
                       <ClientApplicationActions
                         projectId={projectId}
                         applicationId={app.id}
                         status={app.status}
-                        isAssigned={isAssigned && app.status !== 'accepted'}
+                        isAssigned={isAssigned && project.engineer_profile_id !== app.engineer_profile_id}
                       />
                     </div>
                   </div>

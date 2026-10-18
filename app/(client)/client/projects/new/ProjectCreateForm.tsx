@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -49,9 +49,11 @@ export function ProjectCreateForm({ clientProfileId, clientName }: ProjectCreate
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const submitting = useRef(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (submitting.current || success) return
     setError(null)
 
     // Validation
@@ -73,6 +75,7 @@ export function ProjectCreateForm({ clientProfileId, clientName }: ProjectCreate
       return
     }
 
+    submitting.current = true
     setSaving(true)
 
     try {
@@ -105,6 +108,7 @@ export function ProjectCreateForm({ clientProfileId, clientName }: ProjectCreate
         router.refresh()
       }, 1200)
     } catch (err: any) {
+      submitting.current = false
       console.error('Error creating project:', err)
       setError(err.message || 'Failed to create project. Please try again.')
     } finally {

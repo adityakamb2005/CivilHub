@@ -30,7 +30,7 @@ export default async function NewClientProjectPage() {
   }
 
   // Fetch client profile
-  const { data: clientProfileData } = await (supabase as any)
+  const { data: clientProfileData, error: clientProfileError } = await (supabase as any)
     .from('client_profiles')
     .select('*')
     .eq('profile_id', user.id)
@@ -39,7 +39,7 @@ export default async function NewClientProjectPage() {
   let clientProfile = clientProfileData as Database['public']['Tables']['client_profiles']['Row'] | null
 
   // If client_profiles record doesn't exist yet, attempt to create it
-  if (!clientProfile) {
+  if (!clientProfile && !clientProfileError) {
     const { data: newCp, error: cpErr } = await (supabase as any)
       .from('client_profiles')
       .insert({ profile_id: user.id })
@@ -51,7 +51,17 @@ export default async function NewClientProjectPage() {
     }
   }
 
-  const clientProfileId = clientProfile?.id || user.id
+  if (!clientProfile) {
+    return (
+      <div className="ch-card p-8" role="alert">
+        <h1 className="text-xl font-bold text-[var(--color-ch-navy)] mb-2">Client profile unavailable</h1>
+        <p className="text-sm text-[var(--color-ch-text-secondary)] mb-6">We could not load or set up your client profile. Save your profile and try creating the project again.</p>
+        <Link href="/client/profile" className="ch-btn ch-btn-primary">Set Up Client Profile</Link>
+      </div>
+    )
+  }
+
+  const clientProfileId = clientProfile.id
   const clientName = clientProfile?.company || profile?.full_name || null
 
   return (

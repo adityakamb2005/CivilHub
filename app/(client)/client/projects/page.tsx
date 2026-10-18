@@ -45,7 +45,7 @@ export default async function ClientProjectsPage() {
   }
 
   // Fetch client_profile.id
-  const { data: clientProfileData } = await (supabase as any)
+  const { data: clientProfileData, error: clientProfileError } = await (supabase as any)
     .from('client_profiles')
     .select('*')
     .eq('profile_id', user.id)
@@ -55,7 +55,8 @@ export default async function ClientProjectsPage() {
 
   // Fetch all projects owned by this client
   let projectsData: any[] | null = null
-  let error: any = null
+  let error: any = clientProfileError
+  let countsError = false
   const appCounts: Record<string, number> = {}
 
   if (clientProfileId) {
@@ -69,10 +70,11 @@ export default async function ClientProjectsPage() {
 
     if (projectsData && projectsData.length > 0) {
       const projectIds = projectsData.map((p: any) => p.id)
-      const { data: apps } = await (supabase as any)
+      const { data: apps, error: applicationsError } = await (supabase as any)
         .from('project_applications')
         .select('project_id')
         .in('project_id', projectIds)
+      countsError = Boolean(applicationsError)
 
       if (apps) {
         apps.forEach((a: any) => {
@@ -150,6 +152,7 @@ export default async function ClientProjectsPage() {
       )}
 
       {/* Empty state */}
+      {countsError && <p role="alert" className="ch-card p-4 text-sm text-[var(--color-ch-red)]">Application counts could not be loaded. Open the applicants page to try again.</p>}
       {!error && (!projects || projects.length === 0) && (
         <div className="ch-card p-12 text-center max-w-xl mx-auto my-8">
           <div className="w-16 h-16 rounded-full bg-[var(--color-ch-orange)]/10 text-[var(--color-ch-orange)] flex items-center justify-center mx-auto mb-4">
@@ -208,7 +211,7 @@ export default async function ClientProjectsPage() {
                             <EyeOff className="w-3 h-3" /> Draft
                           </span>
                         )}
-                        {count > 0 && (
+                        {!countsError && count > 0 && (
                           <span className="ch-badge bg-blue-50 text-blue-700 border-blue-200 inline-flex items-center gap-1 text-xs font-semibold">
                             <Users className="w-3 h-3" /> {count} Applicant{count === 1 ? '' : 's'}
                           </span>
@@ -229,7 +232,7 @@ export default async function ClientProjectsPage() {
                         href={`/client/projects/${project.id}/applications`}
                         className="ch-btn ch-btn-outline text-xs px-3 py-1.5 inline-flex items-center gap-1.5 text-blue-700 border-blue-200 hover:bg-blue-50"
                       >
-                        <Users className="w-3.5 h-3.5" /> Applicants ({count})
+                        <Users className="w-3.5 h-3.5" /> Applicants ({countsError ? 'Unavailable' : count})
                       </Link>
                       {project.is_published && (
                         <Link

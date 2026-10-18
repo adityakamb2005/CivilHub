@@ -190,6 +190,8 @@ export async function sendMessage(
     return { error: 'Messaging is not configured yet. A project administrator must apply database migration 011 and the current messaging security migration.' }
   }
 
+  if (conversationError) return { error: 'Could not load the conversation. Please try again.' }
+
   if (!conv) {
     return { error: 'Conversation not found.' }
   }
@@ -235,8 +237,8 @@ export async function sendMessage(
   return { success: 'Message sent.' }
 }
 
-export async function markConversationMessagesAsRead(conversationId: string) {
-  if (!isUuid(conversationId)) return
+export async function markConversationMessagesAsRead(conversationId: string): Promise<MessageActionState> {
+  if (!isUuid(conversationId)) return { error: 'Invalid conversation.' }
 
   const supabase = await createClient()
   const db = supabase as any
@@ -245,7 +247,7 @@ export async function markConversationMessagesAsRead(conversationId: string) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) return
+  if (!user) return { error: 'Please sign in to update message read status.' }
 
   const now = new Date().toISOString()
 
@@ -257,10 +259,12 @@ export async function markConversationMessagesAsRead(conversationId: string) {
     .is('read_at', null)
     .select('id')
 
-  if (!error && data && data.length > 0) {
+  if (error) return { error: 'Could not update message read status. Please refresh to try again.' }
+  if (data && data.length > 0) {
     revalidatePath(`/client/messages/${conversationId}`)
     revalidatePath(`/engineer/messages/${conversationId}`)
     revalidatePath('/client/messages')
     revalidatePath('/engineer/messages')
   }
+  return {}
 }

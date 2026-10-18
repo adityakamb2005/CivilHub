@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { Check, X, Loader2 } from 'lucide-react'
 import { acceptProjectApplication, rejectProjectApplication } from '@/lib/applications/projectActions'
 
@@ -16,12 +16,24 @@ export function ClientApplicationActions({
   isAssigned: boolean
 }) {
   const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+
+  const accept = () => {
+    setError(null)
+    startTransition(async () => {
+      const result = await acceptProjectApplication(projectId, applicationId)
+      setError(result.error || null)
+    })
+  }
 
   if (status === 'accepted') {
     return (
-      <span className="ch-badge ch-badge-green font-semibold inline-flex items-center gap-1">
+      <div className="space-y-2">
+        <span className="ch-badge ch-badge-green font-semibold inline-flex items-center gap-1">
         <Check size={13} /> Selected Engineer
-      </span>
+        </span>
+        {error && <><p role="alert" className="text-xs text-rose-700 max-w-sm">{error}</p><button type="button" disabled={isPending} onClick={accept} className="ch-btn ch-btn-outline text-xs">Retry acceptance</button></>}
+      </div>
     )
   }
 
@@ -42,7 +54,9 @@ export function ClientApplicationActions({
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="space-y-2">
+      {error && <p role="alert" className="text-xs text-rose-700 max-w-sm">{error}</p>}
+      <div className="flex items-center gap-2">
       <button
         type="button"
         disabled={isPending || isAssigned}
@@ -52,7 +66,7 @@ export function ClientApplicationActions({
               'Accept this engineer for your project? Accepting will assign this engineer to the project and reject other pending applications.'
             )
           ) {
-            startTransition(() => acceptProjectApplication(projectId, applicationId))
+            accept()
           }
         }}
         className="ch-btn text-xs px-3 py-1.5 inline-flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
@@ -66,7 +80,11 @@ export function ClientApplicationActions({
         disabled={isPending}
         onClick={() => {
           if (window.confirm('Reject this engineer application?')) {
-            startTransition(() => rejectProjectApplication(projectId, applicationId))
+            setError(null)
+            startTransition(async () => {
+              const result = await rejectProjectApplication(projectId, applicationId)
+              setError(result.error || null)
+            })
           }
         }}
         className="ch-btn ch-btn-outline text-xs px-3 py-1.5 text-rose-600 border-rose-200 hover:bg-rose-50 inline-flex items-center gap-1"
@@ -74,6 +92,7 @@ export function ClientApplicationActions({
         {isPending ? <Loader2 size={13} className="animate-spin" /> : <X size={13} />}
         Reject
       </button>
+      </div>
     </div>
   )
 }

@@ -1,9 +1,10 @@
-# Atomic acceptance integration ? prepared, unapplied
+# Atomic acceptance integration - locally validated
 
-Current integration review: 22 October 2026. See
-[`ATOMIC_INTEGRATION_TEST_REPORT.md`](../ATOMIC_INTEGRATION_TEST_REPORT.md)
-for executed validation results and remaining gates. Historical audit/plan notes
-describe earlier designs; the SQL files and this document describe the current one.
+Source review: 22 October 2026. Pre-commit corrections: 23 October 2026.
+The disposable local Supabase instance has migrations 001-013 and 015-017.
+No hosted migration or deployment was performed. See
+[the integration report](../ATOMIC_INTEGRATION_TEST_REPORT.md) for prior results
+and newly verified corrections, including 13 distinct local concurrency scenarios.
 
 ## Transaction boundary
 
@@ -53,7 +54,7 @@ restricted postgres role are documented in the linked review.
 
 ## Migration ordering and profile integration
 
-Install 001?013, then 015, 016 and 017 in an explicitly isolated disposable test
+Install 001-013, then 015, 016 and 017 in an explicitly isolated disposable test
 database first. There is no 014 dependency; no rejected visibility migration is
 recreated. The 015-only test must run before 016; it now fails fast after cutover.
 
@@ -76,20 +77,24 @@ Node tests exercise actual transpiled actions/pages/form handlers through mocked
 boundaries. SQL text checks catch quoting regressions. Neither proves PostgreSQL
 syntax, RLS, locking, notifications, hosted compatibility or JWT verification.
 
-Prepared database artifacts (none executed in this phase):
+Database artifacts and execution scope:
 
-- `tests/sql/project_application_identity_guard.sql`: the pre-016 contract.
+- `tests/sql/project_application_identity_guard.sql`: the pre-016 contract;
+  not run against the current schema.
 - `tests/sql/atomic_project_acceptance.sql`: authorization, direct-write denial,
   rollback injection, assignment conflict, success, retries and notifications.
+  Its external local-operator adaptation passed on 22 October.
 - `tests/sql/atomic_project_acceptance.spec`: rival accepts, same-application
-  retry and both orderings of submission versus acceptance.
+  retry and both orderings of submission versus acceptance. The specification
+  itself was not executed; the Python runner exercised these races against PostgreSQL.
 - `tests/sql/marketplace_profile_security.sql`: private participant/applicant
   cards, identity/verification/notification guards, canonical roles, message
-  permissions and effective RPC/trigger ACL assertions.
+  permissions and effective RPC/trigger ACL assertions; passed on 22 October.
 
-Before any later commit/release, review the final integration diff and finish
-isolated database tests. Before migration/deployment, separately authorize the
-release, audit actual schema/ACL/data drift, review private applicant disclosure,
+Before committing, review the final integration diff and focused correction
+results. The current local SQL suites and 13 race scenarios have passed. Before
+migration/deployment, separately authorize the release, audit actual schema/ACL/data
+drift, review private applicant disclosure,
 and coordinate a marketplace-write pause across old application instances.
 Old three-request acceptance code will fail once the guards activate. Never
 roll back to that code while leaving guards installed or remove authorization
@@ -105,9 +110,29 @@ hardening remain separate review items. Rejected/withdrawn applicants retain the
 existing messaging eligibility rule; changing that is a product decision.
 
 Withdrawal/rejection, bulk/admin writes and FK deletion can interact with the
-project/application lock order. Real races and retry handling remain database
-test gates. Ordinary profile deletion can be stopped by assignment/identity
-guards; maintenance paths must be reviewed. The create form reuses an ID only
+project/application lock order. Thirteen local race scenarios passed on 23
+October; higher isolation, bulk/admin writes and FK deletion remain test gates.
+Ordinary profile deletion can be stopped by assignment/identity guards;
+maintenance paths must be reviewed. The create form reuses an ID only
 within its mounted lifetime, so retries after reload are not durable idempotency.
 Inbox/card fetches remain unpaginated. No production migration or deployment is
 authorized by these files.
+
+## Safe local validation
+
+Run `node scripts/atomic-http-smoke.cjs` for a fresh production build followed by
+23 HTTP checks. Both standalone HTTP and browser validation obtain the actual
+local CLI publishable key, verify container port mappings and build with forced
+loopback settings. Existing build output is never accepted as provenance;
+`--skip-commands` has been removed. Next.js may load `.env.local`, but the verified
+process settings override its public Supabase values. No environment file is edited.
+
+The Python runner rejects URI query options, multi-host/socket destinations and
+nonempty PG-prefixed environment overrides before connecting. It pins host,
+hostaddr, port and database explicitly. Use `--phase concurrency` for races only;
+this does not rotate passwords. Browser/all phases intentionally rotate passwords
+for the four dedicated disposable local accounts and should only be run when that
+side effect is intended. Cleanup attempts every fixture and reports failed IDs;
+resource cleanup closes browser contexts and the browser even after failures.
+
+ESLint remains unavailable; no lint pass is claimed and no dependency was added.

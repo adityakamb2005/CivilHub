@@ -359,6 +359,7 @@ test('mounted conversation uses refreshed message props instead of retaining an 
   const state = []
   let cursor = 0
   const { ConversationView } = load('components/messaging/ConversationView.tsx', {
+    'next/navigation': { useRouter: () => ({ refresh() {} }) },
     react: {
       useState(initial) {
         const index = cursor++
@@ -383,6 +384,38 @@ test('mounted conversation uses refreshed message props instead of retaining an 
   assert.match(refreshed, /Refreshed thread body/)
   assert.doesNotMatch(refreshed, /Old thread body/)
 })
+
+for (const role of ['client', 'engineer']) {
+  test(`${role} conversation refreshes only after successful send and preserves failed drafts`, async () => {
+    for (const successful of [true, false]) {
+      const state = []
+      let cursor = 0
+      let refreshes = 0
+      let pending
+      const { ConversationView } = load('components/messaging/ConversationView.tsx', {
+        react: {
+          useState(initial) { const i = cursor++; if (!(i in state)) state[i] = initial; return [state[i], value => { state[i] = value }] },
+          useEffect() {},
+          useTransition: () => [false, task => { pending = task() }],
+        },
+        'next/navigation': { useRouter: () => ({ refresh() { refreshes++ } }) },
+        'next/link': { __esModule: true, default: 'a' },
+        'lucide-react': new Proxy({}, { get: (_target, name) => name }),
+        '@/lib/messaging/messagingActions': { sendMessage: async () => successful ? { success: 'Message sent.' } : { error: 'Send failed.' } },
+      })
+      const props = { conversationId: applicationId, projectId, projectTitle: 'Project', participantName: 'Participant', participantRole: 'Participant', currentUserId: userId, role, initialMessages: [] }
+      let tree = ConversationView(props)
+      findElement(tree, e => e.type === 'textarea').props.onChange({ target: { value: 'Draft message' } })
+      cursor = 0; tree = ConversationView(props)
+      formElement(tree).props.onSubmit(submitEvent)
+      await pending
+      cursor = 0; tree = ConversationView(props)
+      assert.equal(refreshes, successful ? 1 : 0)
+      assert.equal(findElement(tree, e => e.type === 'textarea').props.value, successful ? '' : 'Draft message')
+      if (!successful) assert.ok(findElement(tree, e => e.props?.role === 'alert'))
+    }
+  })
+}
 
 // Execute the actual proxy with session refresh and response-cookie boundaries.
 function proxyHarness(role, signedIn = true, authError = null) {
@@ -491,6 +524,15 @@ test('submission succeeds and binds only the signed-in engineer identity', async
   assert.equal(h.calls.at(-1).operations.find(op => op[0] === 'insert')[1].engineer_profile_id, engineerId)
   assert.ok(h.invalidations.includes('/projects/' + projectId))
 })
+
+for (const role of ['client', 'admin']) {
+  test(`${role} cannot submit through the engineer application action`, async () => {
+    const h = harness(actionsFile, [ok({ role })])
+    assert.match((await h.exports.submitProjectApplication({}, form())).error, /Only engineer accounts/)
+    assert.equal(h.calls.length, 1)
+    assert.equal(h.invalidations.length, 0)
+  })
+}
 
 test('missing projects and cross-project applications never reach acceptance RPC', async () => {
   for (const responses of [review(null).slice(0, 3), review(owned, null)]) {

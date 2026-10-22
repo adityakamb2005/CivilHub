@@ -1,21 +1,19 @@
 // Anonymous HTTP regression checks against a loopback-only production build.
-// No real credentials, database fixtures, browser automation or remote server.
+// Always builds afresh using the verified local CLI publishable key.
 const assert = require('node:assert/strict')
 const { spawn } = require('node:child_process')
 const path = require('node:path')
+const { prepareLocalBuild } = require('./local-test-build.cjs')
 
-async function main() {
+async function main({ prepareBuild = prepareLocalBuild, startServer = spawn } = {}) {
   const root = path.resolve(__dirname, '..')
+  const env = prepareBuild(root)
+  console.log('Verified local production build completed')
   const origin = 'http://127.0.0.1:3017'
-  const child = spawn(process.execPath, [require.resolve('next/dist/bin/next'), 'start', '--hostname', '127.0.0.1', '--port', '3017'], {
+  const child = startServer(process.execPath, [require.resolve('next/dist/bin/next'), 'start', '--hostname', '127.0.0.1', '--port', '3017'], {
     cwd: root,
     windowsHide: true,
-    env: {
-      ...process.env,
-      NEXT_TELEMETRY_DISABLED: '1',
-      NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321',
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_local_integration_only',
-    },
+    env,
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let checks = 0
@@ -80,4 +78,5 @@ async function main() {
   }
 }
 
-main().catch(error => { console.error(error.message); process.exitCode = 1 })
+module.exports = { main }
+if (require.main === module) main().catch(error => { console.error(error.message); process.exitCode = 1 })

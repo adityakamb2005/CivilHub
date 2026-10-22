@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ArrowLeft, Send, FolderKanban, CheckCheck, Loader2, AlertCircle } from 'lucide-react'
 import { sendMessage, markConversationMessagesAsRead } from '@/lib/messaging/messagingActions'
 
@@ -35,6 +36,7 @@ export function ConversationView({
   initialMessages: MessageItem[]
 }) {
   const messages = initialMessages
+  const router = useRouter()
   const [text, setText] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -62,6 +64,7 @@ export function ConversationView({
         setError(res.error)
       } else {
         setText('')
+        router.refresh()
       }
     })
   }

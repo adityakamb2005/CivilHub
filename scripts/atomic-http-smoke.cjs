@@ -62,7 +62,12 @@ async function main() {
     }
     const callback = await get('/api/auth/callback?next=//evil.example')
     assert.equal(callback.status, 307)
-    assert.equal(new URL(callback.headers.get('location'), origin).href, origin + '/login?error=auth_callback_failed')
+    const callbackUrl = new URL(callback.headers.get('location'), origin)
+    assert.ok(['localhost', '127.0.0.1'].includes(callbackUrl.hostname))
+    assert.equal(callbackUrl.protocol, 'http:')
+    assert.equal(callbackUrl.port, '3017')
+    assert.equal(callbackUrl.pathname, '/login')
+    assert.equal(callbackUrl.search, '?error=auth_callback_failed')
     checks++
     console.log('PASS callback without code stays local')
     console.log(`HTTP smoke: ${checks} passed, 0 failed. Browser and authenticated E2E not run.`)

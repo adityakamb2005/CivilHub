@@ -15,9 +15,10 @@ export default async function ClientMessagesPage() {
 
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser()
 
-  if (!user) redirect('/login')
+  if (authError || !user) redirect('/login')
 
   const { data: profile } = await db
     .from('profiles')
@@ -82,6 +83,11 @@ export default async function ClientMessagesPage() {
     .eq('client_profile_id', clientProfile.id)
     .order('updated_at', { ascending: false })
 
+  const { data: cards, error: cardsError } = !conversationsError && rawConvs?.length
+    ? await db.rpc('conversation_participant_cards')
+    : { data: [], error: null }
+  const cardById = new Map((cards || []).map((card: any) => [card.conversation_id, card]))
+
   const conversations: ConversationItem[] = (rawConvs || []).map((c: any) => {
     const engProfile = Array.isArray(c.engineer_profile)
       ? c.engineer_profile[0]
@@ -93,7 +99,8 @@ export default async function ClientMessagesPage() {
 
     const proj = Array.isArray(c.project) ? c.project[0] : c.project
     const engHeadline = engProfile?.headline || engProfile?.specialization
-    const participantName = engUser?.full_name || engHeadline || 'Civil Engineer'
+    const card = cardById.get(c.id) as any
+    const participantName = card?.engineer_name || engUser?.full_name || engHeadline || 'Civil Engineer'
 
     const msgs = (c.messages || []).sort(
       (a: any, b: any) =>
@@ -111,7 +118,7 @@ export default async function ClientMessagesPage() {
       project_title: proj?.title || 'Civil Project',
       participant_name: participantName,
       participant_role: 'Engineer',
-      participant_avatar: engUser?.avatar_url,
+      participant_avatar: card?.engineer_avatar || engUser?.avatar_url,
       last_message: lastMsg?.body || null,
       last_message_at: lastMsg?.created_at || c.updated_at,
       unread_count: unreadCount,
@@ -123,8 +130,8 @@ export default async function ClientMessagesPage() {
       conversations={conversations}
       role="client"
       loadError={
-        conversationsError
-          ? missingMessagingSchema(conversationsError)
+        (conversationsError || cardsError)
+          ? missingMessagingSchema(conversationsError || cardsError)
             ? 'migration'
             : 'generic'
           : null

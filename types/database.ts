@@ -469,7 +469,24 @@ export interface Database {
       }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      conversation_participant_cards: {
+        Args: Record<string, never>
+        Returns: Json[]
+      }
+      project_messaging_context: {
+        Args: { target_project_id: string; target_engineer_id: string }
+        Returns: Json
+      }
+      project_applicant_cards: {
+        Args: { target_project_id: string }
+        Returns: Json[]
+      }
+      accept_project_application: {
+        Args: { target_project_id: string; target_application_id: string }
+        Returns: undefined
+      }
+    }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
   }

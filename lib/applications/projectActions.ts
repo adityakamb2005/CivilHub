@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import type { Database } from '@/types/database'
 
 export type ApplicationActionState = { error?: string; success?: string }
 
@@ -57,8 +58,9 @@ export async function submitProjectApplication(
   const db = supabase as any
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser()
-  if (!user) {
+  if (authError || !user) {
     return { error: 'Please log in to apply for this project.' }
   }
 
@@ -129,8 +131,9 @@ export async function withdrawProjectApplication(
   const db = supabase as any
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser()
-  if (!user) return { error: 'Please sign in to withdraw your application.' }
+  if (authError || !user) return { error: 'Please sign in to withdraw your application.' }
 
   const { data: profile, error: roleError } = await db.from('profiles').select('role').eq('id', user.id).maybeSingle()
   if (roleError || profile?.role !== 'engineer') return { error: 'Only engineers can withdraw their applications.' }
@@ -168,8 +171,9 @@ export async function acceptProjectApplication(
   const db = supabase as any
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser()
-  if (!user) return { error: 'Please sign in to review applications.' }
+  if (authError || !user) return { error: 'Please sign in to review applications.' }
 
   const { data: profile, error: roleError } = await db.from('profiles').select('role').eq('id', user.id).maybeSingle()
   if (roleError || profile?.role !== 'client') return { error: 'Only clients can review project applications.' }
@@ -214,45 +218,30 @@ export async function acceptProjectApplication(
     return { error: 'The application and assignment are inconsistent. Please contact an administrator.' }
   }
 
-  // Migration-013-compatible workflow: three requests, not a transaction.
-  // Do not deploy this action after migration 016's assignment guards activate.
-  const { data: assignedProject, error: assignError } = project.engineer_profile_id
-    ? { data: project, error: null }
-    : await db
-      .from('projects')
-      .update({ engineer_profile_id: application.engineer_profile_id })
-      .eq('id', projectId)
-      .eq('client_profile_id', clientProfile.id)
-      .is('engineer_profile_id', null)
-      .in('status', ['planned', 'in_progress'])
-      .select('id')
-      .maybeSingle()
-
-  if (assignError || !assignedProject) return { error: 'The assignment could not be saved. Refresh the page before trying again.' }
-
-  const { data: acceptedApplication, error: acceptError } = await db
-    .from('project_applications')
-    .update({ status: 'accepted' })
-    .eq('id', applicationId)
-    .eq('project_id', projectId)
-    .in('status', ['pending', 'accepted'])
-    .select('id')
-    .maybeSingle()
-
-  if (acceptError || !acceptedApplication) {
-    revalidateProjectPaths(projectId)
-    return { error: 'The engineer was assigned, but the application status could not be saved. Refresh and retry acceptance; contact an administrator if the application was withdrawn.' }
+  // Installed SSR 0.5 uses the older SupabaseClient generic parameter order.
+  // Keep the compatibility cast scoped to this typed RPC boundary.
+  const rpcClient = supabase as unknown as {
+    rpc(
+      name: 'accept_project_application',
+      args: Database['public']['Functions']['accept_project_application']['Args']
+    ): PromiseLike<{ error: { code: string } | null }>
   }
-
-  const { error: rejectError } = await db
-    .from('project_applications')
-    .update({ status: 'rejected' })
-    .eq('project_id', projectId)
-    .neq('id', applicationId)
-    .eq('status', 'pending')
-
+  const { error } = await rpcClient.rpc('accept_project_application', {
+    target_project_id: projectId,
+    target_application_id: applicationId,
+  })
+  if (error) {
+    const messages: Record<string, string> = {
+      PA001: 'Only clients can review project applications.',
+      PA002: 'You cannot review applications for this project.',
+      PA003: 'This application is no longer available for acceptance.',
+      PA004: 'This project already has an assigned engineer.',
+      PA005: 'This project is not active. Update its status before accepting an engineer.',
+      PA006: 'The application and assignment are inconsistent. Please contact an administrator.',
+    }
+    return { error: messages[error.code] ?? 'The assignment could not be saved. Refresh the page before trying again.' }
+  }
   revalidateProjectPaths(projectId)
-  if (rejectError) return { error: 'The engineer was accepted, but competing applications could not be closed. Retry acceptance to finish updating them.' }
   return { success: 'Engineer accepted and assigned.' }
 }
 
@@ -266,8 +255,9 @@ export async function rejectProjectApplication(
   const db = supabase as any
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser()
-  if (!user) return { error: 'Please sign in to review applications.' }
+  if (authError || !user) return { error: 'Please sign in to review applications.' }
 
   const { data: profile, error: roleError } = await db.from('profiles').select('role').eq('id', user.id).maybeSingle()
   if (roleError || profile?.role !== 'client') return { error: 'Only clients can review project applications.' }

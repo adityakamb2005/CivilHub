@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { Database } from '@/types/database'
+import { filterInvalidAuthCookies } from '@/lib/supabase/sessionCookies'
 
 /**
  * Role-based route protection map.
@@ -14,6 +15,10 @@ const PROTECTED_ROUTES: Record<string, 'engineer' | 'client' | 'admin'> = {
 }
 
 export default async function proxy(request: NextRequest) {
+  const { invalidNames } = filterInvalidAuthCookies(
+    request.cookies.getAll(), process.env.NEXT_PUBLIC_SUPABASE_URL!
+  )
+  invalidNames.forEach(name => request.cookies.delete(name))
   let supabaseResponse = NextResponse.next({ request })
 
   // Create a Supabase client that can read/write cookies in middleware
@@ -41,8 +46,11 @@ export default async function proxy(request: NextRequest) {
   // IMPORTANT: Do not run any code between createServerClient and supabase.auth.getUser()
   // Doing so can cause session refresh issues.
   const {
-    data: { user },
+    data: authData,
+    error: authError,
   } = await supabase.auth.getUser()
+  const user = authError ? null : authData.user
+  invalidNames.forEach(name => supabaseResponse.cookies.set(name, '', { path: '/', maxAge: 0 }))
 
   let userRole: string | undefined
   if (user) {
@@ -55,6 +63,15 @@ export default async function proxy(request: NextRequest) {
   }
 
   const { pathname } = request.nextUrl
+
+  // Redirects must carry any refreshed or cleared auth cookies too.
+  const redirectWithSession = (url: URL) => {
+    const response = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach(cookie => response.cookies.set(cookie))
+    return response
+  }
+
+  const hasRole = userRole === 'client' || userRole === 'engineer' || userRole === 'admin'
 
   // Check if this route requires a specific role
   // Match route segments, not raw string prefixes. Without the boundary
@@ -70,35 +87,42 @@ export default async function proxy(request: NextRequest) {
     if (!user) {
       const loginUrl = request.nextUrl.clone()
       loginUrl.pathname = '/login'
-      loginUrl.searchParams.set('redirect', pathname)
-      return NextResponse.redirect(loginUrl)
+      loginUrl.search = ''
+      loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search)
+      return redirectWithSession(loginUrl)
     }
 
     // Authenticated but wrong role — redirect to their correct dashboard
     if (userRole !== requiredRole) {
       const dashboardUrl = request.nextUrl.clone()
-      if (userRole === 'engineer') {
+      dashboardUrl.search = ''
+      if (!hasRole) {
+        dashboardUrl.pathname = '/account-unavailable'
+      } else if (userRole === 'engineer') {
         dashboardUrl.pathname = '/engineer/dashboard'
       } else if (userRole === 'admin') {
         dashboardUrl.pathname = '/admin/dashboard'
       } else {
         dashboardUrl.pathname = '/client/dashboard'
       }
-      return NextResponse.redirect(dashboardUrl)
+      return redirectWithSession(dashboardUrl)
     }
   }
 
   // Redirect authenticated users away from auth pages
   if (user && (pathname === '/login' || pathname === '/register')) {
     const dashboardUrl = request.nextUrl.clone()
-    if (userRole === 'engineer') {
+    dashboardUrl.search = ''
+    if (!hasRole) {
+      dashboardUrl.pathname = '/account-unavailable'
+    } else if (userRole === 'engineer') {
       dashboardUrl.pathname = '/engineer/dashboard'
     } else if (userRole === 'admin') {
       dashboardUrl.pathname = '/admin/dashboard'
     } else {
       dashboardUrl.pathname = '/client/dashboard'
     }
-    return NextResponse.redirect(dashboardUrl)
+    return redirectWithSession(dashboardUrl)
   }
 
   return supabaseResponse

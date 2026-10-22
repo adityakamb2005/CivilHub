@@ -23,79 +23,25 @@ export async function getOrCreateConversation(
 
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser()
 
-  if (!user) {
+  if (authError || !user) {
     return { error: 'Please sign in to start a conversation.' }
   }
 
-  // Fetch project & client profile details
-  const { data: project } = await db
-    .from('projects')
-    .select('id, client_profile_id, engineer_profile_id')
-    .eq('id', projectId)
-    .maybeSingle()
-
-  if (!project || !project.client_profile_id) {
-    return { error: 'Project context not found.' }
-  }
-
-  // Fetch client profile and target engineer profile
-  const { data: clientProfile } = await db
-    .from('client_profiles')
-    .select('id, profile_id')
-    .eq('id', project.client_profile_id)
-    .maybeSingle()
-
-  let { data: engineerProfile } = await db
-    .from('engineer_profiles')
-    .select('id, profile_id')
-    .eq('id', engineerProfileId)
-    .maybeSingle()
-
-  if (!engineerProfile) {
-    const { data: engByProfile } = await db
-      .from('engineer_profiles')
-      .select('id, profile_id')
-      .eq('profile_id', engineerProfileId)
-      .maybeSingle()
-    if (engByProfile) {
-      engineerProfile = engByProfile
-    }
-  }
-
-  if (!clientProfile || !engineerProfile) {
-    return { error: 'Participant profiles not found.' }
-  }
-
-  // Authorization check: User must be either the client or the engineer participant
-  const isClientUser = clientProfile.profile_id === user.id
-  const isEngineerUser = engineerProfile.profile_id === user.id
-
-  if (!isClientUser && !isEngineerUser) {
+  // The database resolves the eligible relationship without exposing private
+  // counterpart profiles. It validates canonical roles and participant identity.
+  const { data: context, error: contextError } = await db.rpc('project_messaging_context', {
+    target_project_id: projectId,
+    target_engineer_id: engineerProfileId,
+  })
+  if (contextError) return { error: 'Could not load the project participants. Please try again.' }
+  if (!context || ![context.client_user_id, context.engineer_user_id].includes(user.id)) {
     return { error: 'You are not authorized to start this conversation.' }
   }
-
-  // Eligibility check: Must be assigned engineer or have an application
-  const isAssigned = project.engineer_profile_id === engineerProfile.id
-
-  let hasApplication = false
-  if (!isAssigned) {
-    const { data: application } = await db
-      .from('project_applications')
-      .select('id')
-      .eq('project_id', projectId)
-      .eq('engineer_profile_id', engineerProfile.id)
-      .maybeSingle()
-    hasApplication = Boolean(application)
-  }
-
-  if (!isAssigned && !hasApplication) {
-    return {
-      error:
-        'Conversations can only be started between clients and engineers associated via a project application or assignment.',
-    }
-  }
+  const clientProfile = { id: context.client_profile_id }
+  const engineerProfile = { id: context.engineer_profile_id }
 
   // Check if conversation already exists
   const { data: existingConv, error: existingError } = await db
@@ -166,9 +112,10 @@ export async function sendMessage(
 
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser()
 
-  if (!user) {
+  if (authError || !user) {
     return { error: 'Please sign in to send messages.' }
   }
 
@@ -245,9 +192,10 @@ export async function markConversationMessagesAsRead(conversationId: string): Pr
 
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser()
 
-  if (!user) return { error: 'Please sign in to update message read status.' }
+  if (authError || !user) return { error: 'Please sign in to update message read status.' }
 
   const now = new Date().toISOString()
 

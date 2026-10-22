@@ -19,16 +19,18 @@ export default async function ClientConversationPage({ params }: PageProps) {
 
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser()
 
-  if (!user) redirect(`/login?redirect=/client/messages/${conversationId}`)
+  if (authError || !user) redirect(`/login?redirect=/client/messages/${conversationId}`)
 
-  const { data: clientProfile } = await db
+  const { data: clientProfile, error: profileError } = await db
     .from('client_profiles')
     .select('id')
     .eq('profile_id', user.id)
     .maybeSingle()
 
+  if (profileError) return <MessagingUnavailable migrationMissing={missingMessagingSchema(profileError)} />
   if (!clientProfile) redirect('/client/dashboard')
 
   // Fetch conversation & ensure ownership
@@ -57,6 +59,10 @@ export default async function ClientConversationPage({ params }: PageProps) {
     notFound()
   }
 
+  const { data: cards, error: cardsError } = await db.rpc('conversation_participant_cards')
+  if (cardsError) return <MessagingUnavailable migrationMissing={missingMessagingSchema(cardsError)} />
+  const card = (cards || []).find((entry: any) => entry.conversation_id === conversationId)
+
   // Fetch messages thread
   const { data: rawMsgs, error: messagesError } = await db
     .from('messages')
@@ -72,7 +78,7 @@ export default async function ClientConversationPage({ params }: PageProps) {
   const engUser = Array.isArray(engProfile?.profiles) ? engProfile?.profiles[0] : engProfile?.profiles
   const proj = Array.isArray(conv.project) ? conv.project[0] : conv.project
   const engHeadline = engProfile?.headline || engProfile?.specialization
-  const participantName = engUser?.full_name || engHeadline || 'Civil Engineer'
+  const participantName = card?.engineer_name || engUser?.full_name || engHeadline || 'Civil Engineer'
 
   const initialMessages: MessageItem[] = (rawMsgs || []).map((m: any) => ({
     id: m.id,

@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { Database } from '@/types/database'
+import { filterInvalidAuthCookies } from './sessionCookies'
 
 /**
  * Server Supabase client — use in Server Components, Route Handlers, and Server Actions.
@@ -15,7 +16,9 @@ export async function createClient() {
     {
       cookies: {
         getAll() {
-          return cookieStore.getAll()
+          return filterInvalidAuthCookies(
+            cookieStore.getAll(), process.env.NEXT_PUBLIC_SUPABASE_URL!
+          ).cookies
         },
         setAll(cookiesToSet: { name: string; value: string; options: any }[]) {
           try {

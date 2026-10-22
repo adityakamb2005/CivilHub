@@ -15,9 +15,10 @@ export default async function EngineerMessagesPage() {
 
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser()
 
-  if (!user) redirect('/login')
+  if (authError || !user) redirect('/login')
 
   const { data: profile } = await db
     .from('profiles')
@@ -81,12 +82,18 @@ export default async function EngineerMessagesPage() {
     .eq('engineer_profile_id', engineerProfile.id)
     .order('updated_at', { ascending: false })
 
+  const { data: cards, error: cardsError } = !conversationsError && rawConvs?.length
+    ? await db.rpc('conversation_participant_cards')
+    : { data: [], error: null }
+  const cardById = new Map((cards || []).map((card: any) => [card.conversation_id, card]))
+
   const conversations: ConversationItem[] = (rawConvs || []).map((c: any) => {
     const clientProfile = Array.isArray(c.client_profile) ? c.client_profile[0] : c.client_profile
     const clientUser = Array.isArray(clientProfile?.profiles) ? clientProfile?.profiles[0] : clientProfile?.profiles
     const proj = Array.isArray(c.project) ? c.project[0] : c.project
     const clientCompany = clientProfile?.company
-    const participantName = clientUser?.full_name || clientCompany || 'Client Project Owner'
+    const card = cardById.get(c.id) as any
+    const participantName = card?.client_name || clientUser?.full_name || clientCompany || 'Client Project Owner'
 
     const msgs = (c.messages || []).sort(
       (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -102,12 +109,12 @@ export default async function EngineerMessagesPage() {
       project_title: proj?.title || 'Civil Project',
       participant_name: participantName,
       participant_role: 'Client',
-      participant_avatar: clientUser?.avatar_url,
+      participant_avatar: card?.client_avatar || clientUser?.avatar_url,
       last_message: lastMsg?.body || null,
       last_message_at: lastMsg?.created_at || c.updated_at,
       unread_count: unreadCount,
     }
   })
 
-  return <InboxView conversations={conversations} role="engineer" loadError={conversationsError ? (missingMessagingSchema(conversationsError) ? 'migration' : 'generic') : null} />
+  return <InboxView conversations={conversations} role="engineer" loadError={(conversationsError || cardsError) ? (missingMessagingSchema(conversationsError || cardsError) ? 'migration' : 'generic') : null} />
 }

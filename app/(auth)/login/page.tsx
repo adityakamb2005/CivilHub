@@ -38,10 +38,11 @@ function LoginForm() {
           .select('role')
           .eq('id', data.user.id)
           .maybeSingle()
-        const role = (profile as { role?: string } | null)?.role ?? data.user?.user_metadata?.role
+        const role = (profile as { role?: string } | null)?.role
         if (role === 'engineer') router.push('/engineer/dashboard')
         else if (role === 'admin') router.push('/admin/dashboard')
-        else router.push('/client/dashboard')
+        else if (role === 'client') router.push('/client/dashboard')
+        else router.push('/account-unavailable')
       } else {
         router.push(redirectUrl)
       }

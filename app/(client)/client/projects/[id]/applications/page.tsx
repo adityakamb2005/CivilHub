@@ -95,7 +95,14 @@ export default async function ClientProjectApplicationsPage({ params }: PageProp
     .eq('project_id', projectId)
     .order('created_at', { ascending: false })
 
-  const applications = rawApps || []
+  const { data: cards, error: cardsError } = appsError
+    ? { data: null, error: null }
+    : await db.rpc('project_applicant_cards', { target_project_id: projectId })
+  const cardById = new Map((cards || []).map((card: any) => [card.id, card]))
+  const applications = (rawApps || []).map((application: any) => ({
+    ...application,
+    engineer_profile: cardById.get(application.engineer_profile_id) || application.engineer_profile,
+  }))
 
   // Check if an engineer is already assigned
   const isAssigned = Boolean(project.engineer_profile_id)
@@ -144,7 +151,7 @@ export default async function ClientProjectApplicationsPage({ params }: PageProp
       </div>
 
       {/* Error state */}
-      {appsError && (
+      {(appsError || cardsError) && (
         <div
           role="alert"
           className="p-4 rounded-xl bg-[var(--color-ch-red-light)] border border-[var(--color-ch-red)]/20 text-[var(--color-ch-red)] flex items-start gap-3 text-sm"
@@ -152,7 +159,7 @@ export default async function ClientProjectApplicationsPage({ params }: PageProp
           <AlertCircle size={18} className="shrink-0 mt-0.5" />
           <div>
             <h3 className="font-semibold">Failed to load applications</h3>
-            <p className="text-xs opacity-90 mt-1">{appsError.message}</p>
+            <p className="text-xs opacity-90 mt-1">Please refresh the page to try again.</p>
           </div>
         </div>
       )}

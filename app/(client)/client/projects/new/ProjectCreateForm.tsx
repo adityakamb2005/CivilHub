@@ -50,6 +50,7 @@ export function ProjectCreateForm({ clientProfileId, clientName }: ProjectCreate
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const submitting = useRef(false)
+  const submissionId = useRef<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -79,10 +80,12 @@ export function ProjectCreateForm({ clientProfileId, clientName }: ProjectCreate
     setSaving(true)
 
     try {
+      submissionId.current ??= crypto.randomUUID()
       const now = new Date().toISOString()
       const { data, error: insertError } = await (supabase as any)
         .from('projects')
         .insert({
+          id: submissionId.current,
           title: title.trim(),
           description: description.trim(),
           project_type: finalType,
@@ -99,7 +102,15 @@ export function ProjectCreateForm({ clientProfileId, clientName }: ProjectCreate
         .single()
 
       if (insertError) {
-        throw insertError
+        // A lost response can leave a committed project. Reuse this form's ID
+        // and verify ownership before reporting an earlier attempt as saved.
+        if (insertError.code !== '23505') throw insertError
+        const { data: saved, error: savedError } = await (supabase as any)
+          .from('projects').select('id').eq('id', submissionId.current)
+          .eq('client_profile_id', clientProfileId).maybeSingle()
+        if (savedError || !saved) throw insertError
+      } else if (!data?.id) {
+        throw new Error('The project could not be confirmed. Please try again.')
       }
 
       setSuccess(true)
@@ -107,10 +118,9 @@ export function ProjectCreateForm({ clientProfileId, clientName }: ProjectCreate
         router.push('/client/projects')
         router.refresh()
       }, 1200)
-    } catch (err: any) {
+    } catch {
       submitting.current = false
-      console.error('Error creating project:', err)
-      setError(err.message || 'Failed to create project. Please try again.')
+      setError('Failed to create project. Please try again.')
     } finally {
       setSaving(false)
     }

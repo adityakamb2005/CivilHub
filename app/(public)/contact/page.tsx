@@ -15,6 +15,9 @@ export default function ContactPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (formData.name && formData.email && formData.message) {
+      const subject = encodeURIComponent('CivilHub: ' + formData.topic)
+      const body = encodeURIComponent(formData.message + '\n\nFrom: ' + formData.name + '\nReply to: ' + formData.email)
+      window.location.href = 'mailto:hello@civilhub.com?subject=' + subject + '&body=' + body
       setSubmitted(true)
     }
   }
@@ -28,7 +31,7 @@ export default function ContactPage() {
           Get in Touch with Our Team
         </h1>
         <p className="text-[var(--color-ch-text-secondary)]">
-          Have questions about engineer profiles, client project tools, or platform feedback? Submit your inquiry below.
+          Have questions about engineer profiles, client project tools, or platform feedback? Prepare your inquiry below, then send it using your email app.
         </p>
       </section>
 
@@ -85,10 +88,10 @@ export default function ContactPage() {
                     <CheckCircle2 size={24} />
                   </div>
                   <h3 className="text-xl font-bold text-[var(--color-ch-navy)]">
-                    Inquiry Submitted
+                    Continue in your email app
                   </h3>
                   <p className="text-sm text-[var(--color-ch-text-secondary)] max-w-md mx-auto">
-                    Thank you, <span className="font-semibold text-[var(--color-ch-navy)]">{formData.name}</span>. Your inquiry regarding <span className="font-semibold">{formData.topic}</span> has been received and logged for CivilHub administration.
+                    Thank you, <span className="font-semibold text-[var(--color-ch-navy)]">{formData.name}</span>. Your inquiry regarding <span className="font-semibold">{formData.topic}</span> is ready in your email app. Please send it there to contact us. This form does not store or send messages.
                   </p>
                   <button
                     type="button"

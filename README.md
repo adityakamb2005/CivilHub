@@ -2,16 +2,17 @@
 
 **Connecting Civil Engineers, Clients & Construction Opportunities**
 
-CivilHub brings professional profiles, construction projects, engineer applications
-and project conversations into one workspace. Clients can find engineering talent
-and review applicants; civil engineers can present their work and discover their
-next opportunity.
+CivilHub connects clients and civil engineers through construction project
+listings, professional portfolios, applications, and project-linked messaging
+in one workspace.
 
-[Features](#key-features) · [How it works](#how-civilhub-works) ·
+[![Visit Live Website](https://img.shields.io/badge/Visit_Live_Website-F97316?style=for-the-badge&logo=vercel&logoColor=white)](https://civilhub-six.vercel.app)
+
+[Explore Features](#key-features) · [How it works](#how-civilhub-works) ·
 [Screenshots](#application-screenshots) · [Local setup](#local-setup) ·
 [Documentation](docs/README.md) · [Deployment guide](docs/DEPLOYMENT.md)
 
-> **Live student demonstration:** [civilhub-six.vercel.app](https://civilhub-six.vercel.app)
+> **Live student demonstration.**
 > Public pages and core client/engineer workflows are verified. Custom SMTP is not
 > configured; public email confirmation and password recovery remain restricted.
 
@@ -264,8 +265,6 @@ without posting secrets or exploit details publicly.
 
 ## Current status
 
-The student demonstration is live at
-**[https://civilhub-six.vercel.app](https://civilhub-six.vercel.app)**.
 Application release **`eccb5102bf31b4aeb145c61a43e96d16d6c3b751`** was built
 and deployed by Vercel from GitHub `main`, using Next.js and Node 24.x on Hobby.
 Reviewed database migrations 015-018 are applied; migration history remains

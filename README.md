@@ -11,8 +11,9 @@ next opportunity.
 [Screenshots](#application-screenshots) · [Local setup](#local-setup) ·
 [Documentation](docs/README.md) · [Deployment guide](docs/DEPLOYMENT.md)
 
-> **Launch status:** Core workflows are implemented and locally validated.
-> Public deployment is unverified. The public website link will be added after deployment.
+> **Live student demonstration:** [civilhub-six.vercel.app](https://civilhub-six.vercel.app)
+> Public pages and core client/engineer workflows are verified. Custom SMTP is not
+> configured; public email confirmation and password recovery remain restricted.
 
 ## What is CivilHub?
 
@@ -204,7 +205,7 @@ components/            Shared layout, marketplace, messaging, admin and calculat
 lib/                   Supabase clients, Server Actions, auth helpers and calculations
 types/                 Database and application types
 proxy.ts               Session refresh and role-based route handling
-supabase/migrations/   Reviewed SQL history: 001-013, 015-017
+supabase/migrations/   Reviewed SQL history: 001-013, 015-018
 tests/                 Node tests, SQL artifacts and isolated release runner
 scripts/               HTTP smoke and mandatory local-build safety helpers
 docs/                  Developer notes, security review, deployment and screenshots
@@ -263,14 +264,24 @@ without posting secrets or exploit details publicly.
 
 ## Current status
 
-As checked on **23 October 2026**, GitHub `main` and this worktree's release HEAD
-both point to **`9d28f85`**. Core application workflows are implemented and local
-integration evidence is recorded. This README update is not yet published.
+The student demonstration is live at
+**[https://civilhub-six.vercel.app](https://civilhub-six.vercel.app)**.
+Application release **`eccb5102bf31b4aeb145c61a43e96d16d6c3b751`** was built
+and deployed by Vercel from GitHub `main`, using Next.js and Node 24.x on Hobby.
+Reviewed database migrations 015-018 are applied; migration history remains
+unreconciled and must not be used to replay the existing baseline.
 
-Production hosting, hosted schema/migration history, Auth URLs and production
-smoke tests remain unverified. No GitHub Actions workflow or tracked Vercel
-deployment configuration was found; an external hosting integration may still
-exist. The source's `civilhub.com` metadata is not a verified project website.
+Live browser checks passed for public pages, client/engineer login and dashboards,
+project creation/publication, engineer applications, rejection, atomic acceptance
+and two-way messaging. Anonymous/private phone restrictions and nonparticipant
+message denial passed. Dedicated test accounts and records were removed.
+
+Custom SMTP is absent. Email confirmation remains enabled, and default Supabase
+email delivery restricts recipients to project-team addresses. Arbitrary-user
+signup confirmation and password recovery are not ready; email round trips were
+not verified. The source's `civilhub.com` metadata/contact address is not a
+verified project domain. See the [deployment record](docs/DEPLOYMENT.md) for
+configuration, recovery evidence and remaining operational limitations.
 
 ## Contributing
 

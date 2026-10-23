@@ -1,63 +1,46 @@
-# Deployment preparation
+# CivilHub production deployment
 
-Reviewed: **23 October 2026**, release commit **`9d28f85`**.
-This is a preparation guide. No hosting project, deployment, hosted database
-inspection, migration or production credential change was performed.
+Verified on **23 October 2026 (UTC)**.
 
-## Verified state and open gates
+Website: **[https://civilhub-six.vercel.app](https://civilhub-six.vercel.app)**.
+Application release: **`eccb5102bf31b4aeb145c61a43e96d16d6c3b751`**.
+Vercel deployment: `dpl_JBdvd9RYF53rhpMkwPykw8UwE23u`.
 
-| Area | Observed state | Before launch |
-| --- | --- | --- |
-| GitHub | Public repository; remote `main` matched `9d28f85` through read-only Git inspection | Review and publish documentation separately |
-| Hosting | No tracked `vercel.json`, deployment workflow, Dockerfile or local Vercel project link found | Owner must identify an existing integration or choose a host; external dashboard state is unknown |
-| Build | `build: next build`, `start: next start`; prior local build passed | Validate on the selected supported host runtime with target settings |
-| Runtime | Locked Supabase JS requires Node >=22; Next.js alone requires >=20.9; no repository Node pin; inspection runtime was Node 25.9 | Recommend Node 24 LTS; host-runtime parity remains unverified |
-| Database | SQL order and local evidence reviewed | Hosted history, schema, ownership, grants, data and backup status unknown |
-| Authentication | Email/password, confirmation callback and recovery implemented | Verify target Site URL, redirects, mail delivery and canonical roles |
-| Website | GitHub homepage field empty; source metadata refers to unverified `civilhub.com` | **WEBSITE URL REQUIRED AFTER DEPLOYMENT** |
-| Monitoring / CI | No repository deployment/CI workflow or monitoring integration found | Choose monitoring and verify any externally configured integrations |
-| Screenshots | Three genuine local public-page captures | Authenticated screen gallery remains optional follow-up |
+## Verified production state
 
-The application and migration files are unchanged by this documentation task.
-The [historical integration report](../ATOMIC_INTEGRATION_TEST_REPORT.md) records
-local testing; none of its results is production verification.
+| Area | Verified result |
+| --- | --- |
+| GitHub | Public `adityakamb2005/CivilHub`; `main` publication automatically triggered the matching production build |
+| Hosting | `adiak1441-3898/civilhub`, existing Hobby plan for the noncommercial student demonstration |
+| Build/runtime | Vercel READY; Next.js preset, repository root, Node 24.x; default Next.js build/output handling |
+| Website | Assigned production domain serves HTTP 200 anonymously over HTTPS |
+| Environment | Both required public Supabase values configured for Production and securely compared with verified local configuration |
+| Database | Project `meolxzjkpsyzvrnwehbf`; existing 001-013 baseline preserved; reviewed 015-018 applied and checked in order |
+| Migration history | Hosted history table remains absent; no historical replay, baseline adoption or history repair was performed |
+| Authentication | Production Site URL and exact callbacks configured; email confirmation and other Auth settings preserved |
+| Recovery | Full logical database backup and independent network-isolated restoration verified; pre-cutover data/schema/roles/ACLs matched the snapshot |
+| Live workflows | Public routes, role login/dashboards, project publication, applications, rejection, atomic acceptance and two-way messaging passed |
+| Privacy | Anonymous/cross-user phone reads and view writes denied; owner phone reads work; public/embedded paths and applicant cards omit private phone; nonparticipants cannot read conversations/messages |
+| Test cleanup | Dedicated confirmed synthetic accounts and their projects removed; temporary test credentials deleted |
 
-During this documentation task, three public local pages returned HTTP 200 and
-were captured in Edge. The verification SQL below also parsed and executed in a
-read-only transaction against the verified isolated PostgreSQL instance. No
-application integration suite or production build was rerun.
+The deployed application was verified through the public domain and browser UI,
+with user-scoped API checks for database permissions. No existing user account
+was changed for testing. Previously passing 98 Node tests, two SQL suites,
+TypeScript and the local build were reused after matching all prepared source
+hashes; Vercel performed the required production build with production values.
 
-## Hosting plan: recommendation, not existing configuration
+## Hosting configuration
 
-Vercel is the recommended starting option for this Next.js application because
-it supports the full-stack framework. A server-capable Node host is also possible.
-A static GitHub Pages export is unsuitable for the current Server Actions,
-session handling and server-rendered database access. See
-[Vercel's Next.js guide](https://vercel.com/docs/frameworks/full-stack/nextjs).
+The project uses GitHub `main` for automatic production deployments. This
+behavior was verified by the release push. Documentation-only publications may
+also trigger a build; monitor them before declaring the release complete.
+No GitHub Actions deployment workflow or extra paid resource was added.
 
-**Only after separate deployment authorization:**
-
-1. Verify which hosting project, account and billing owner will be used. Importing
-   a Git repository can trigger a build/deployment; do not click through as a
-   supposedly read-only setup step.
-2. Select the Next.js preset and repository root. Use `npm ci` to install,
-   `npm run build` to build, and the platform's default Next.js output handling.
-   Do not set the output directory to `out`.
-3. Select Node 24.x in host settings and validate there. Vercel currently documents
-   24.x and 22.x support; the repository has no `engines` override. See
-   [supported Node versions](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions).
-4. Configure preview and production separately. Preview deployments must use an
-   isolated staging backend, not production accounts/data.
-5. Review the production branch and automatic deployment behavior before enabling
-   Git integration. No GitHub Actions automation was added here.
-6. Coordinate database cutover, compatible application version and a marketplace
-   write pause. Obtain approval before the first build/deployment against hosted
-   infrastructure, including builds that may read backend data.
-
-For a separately approved self-hosted Node installation, use `npm ci`,
-`npm run build` and `npm run start` behind HTTPS and an appropriate reverse proxy.
-Keep server instances on the same release and review Server Action origin,
-cookie and cache behavior. Do not share the development server publicly.
+Only Production has the verified backend values. Preview deployments are not
+configured or validated for application use; use an isolated staging backend
+before enabling previews. Do not copy production accounts or privileged keys
+into previews. Future application/database cutovers still require approval,
+compatibility review, a fresh backup/drift check and coordinated writes.
 
 ### Environment names
 
@@ -85,34 +68,36 @@ application change before treating them as launch branding.
 
 ## Authentication configuration
 
-After the real HTTPS origin is established, an authorized operator should:
+Configured Supabase Auth Site URL:
+`https://civilhub-six.vercel.app`.
+Exact additional redirect URLs:
 
-- Set Supabase Auth **Site URL** to that origin.
-- Allow the exact registration callback destination
-  `<approved-origin>/api/auth/callback`.
-- Allow recovery through
-  `<approved-origin>/api/auth/callback?next=/update-password`, matching the
-  application's `redirectTo` value. Verify query matching and the actual email
-  template behavior rather than assuming the configured path is enough.
-- Keep preview/local callbacks in their respective isolated environments. Prefer
-  exact production paths over broad wildcard redirect allowlists, following
-  [Supabase redirect guidance](https://supabase.com/docs/guides/auth/redirect-urls).
-- Verify confirmation/recovery templates, SMTP delivery, expiry, throttling and
-  cookie behavior over HTTPS in a complete email round trip.
-- Verify signup creates canonical client/engineer profiles through
-  `handle_new_user()`; public signup must not create administrators. Provision
-  admins through a separately controlled operator process, then test cross-role
-  denials. Do not authorize from editable user metadata.
+- `https://civilhub-six.vercel.app/api/auth/callback`
+- `https://civilhub-six.vercel.app/api/auth/callback?next=/update-password`
 
-The callback exchanges a code, obtains the canonical database role and redirects
-to a local path. This does not prove hosted redirect settings or email templates
-are already correct.
+Only these two configuration fields changed. Email confirmation, MFA, provider
+configuration and rate limits were preserved. The repository's development
+`supabase/config.toml` contains different defaults; never push it wholesale to
+production. Use a reviewed minimal config and inspect declared changes first.
+See [Supabase redirect guidance](https://supabase.com/docs/guides/auth/redirect-urls).
+
+**Email limitation:** custom SMTP host/user/sender settings are absent. Supabase's
+default mail service restricts delivery to project-team addresses and imposes
+strict rate limits. Arbitrary-user signup confirmation and password recovery
+remain blocked until a suitable mail provider is configured. Email round trips,
+templates and delivery were not verified. Do not disable confirmations to hide
+this limitation. See [Supabase SMTP documentation](https://supabase.com/docs/guides/auth/auth-smtp).
+
+Dedicated confirmed synthetic client/engineer accounts verified password login,
+canonical signup-trigger workspace creation and role restrictions. They were
+created without sending mail, then removed after testing. Their success does
+not establish public self-service signup or email recovery readiness.
 
 ## Supabase migration assessment
 
 ### Order and dependencies
 
-There are **16 SQL files**: **001 through 013, then 015, 016 and 017**.
+There are **17 SQL files**: **001 through 013, then 015 through 018**.
 There is deliberately **no 014**. Review the exact source at the release SHA;
 do not invent or recover the rejected visibility migration.
 
@@ -123,6 +108,7 @@ do not invent or recover the rejected visibility migration.
 | 015 | Freezes application identity/submitted content, requires ordinary inserts to be pending, replaces the named engineer INSERT policy; depends on 001-013 |
 | 016 | Atomic acceptance, assignment/decision guards, one accepted application per project and submission serialization; requires 015 and the existing `postgres` owner |
 | 017 | Canonical workspace/project/conversation roles, identity/verification/notification guards and scoped messaging/applicant display RPCs; requires 016 and ships with its application call sites |
+| 018 | SELECT-only five-column public profile view; owner/admin-only base-profile reads protect phone numbers; ships with public engineer/project page changes |
 
 The final signup trigger implementation comes from the ordered history, including
 009's client-workspace support. Replaying 001 or 008 out of order can replace it
@@ -131,8 +117,13 @@ after 016; do not run it as a post-release test.
 
 ### Hosted history comparison and preflight
 
-**Hosted state is unknown.** An authorized operator must first obtain the target
-project identity through a secure operator channel and perform read-only review.
+**Hosted state was inspected and verified.** Existing schema represented the
+001-013 baseline with no hosted migration-history table. Only 015-018 were
+executed, in order, as complete transaction files. Definitions, triggers,
+policies, the unique index and view permissions were checked after execution.
+No history repair was performed. Do not rerun these non-idempotent files.
+
+The following remains the preflight procedure for future targets or changes:
 
 1. Export migration history and inspect actual schema/function/policy definitions.
    Compare versions, names and contents with the repository. Short source numbers
@@ -141,7 +132,7 @@ project identity through a secure operator channel and perform read-only review.
    this repository. That mapping is evidence for that installation only, not a
    production baseline. Do not rename committed migrations or repair hosted
    history merely to make a CLI comparison green.
-3. If the target already has equivalent 001-013, review only pending 015-017.
+3. If the target already has equivalent 001-013, review only genuinely pending files through 018.
    If later versions are already installed, do not rerun them. For a truly empty
    target, review the full ordered baseline. Stop on unknown/partial/drifted state.
 4. Review table ownership, enabled/non-FORCE RLS, schema exposure, all permissive
@@ -173,22 +164,22 @@ migration history, time window, owner and restore procedure.
 
 Pause marketplace writes and drain incompatible application instances. Agree on
 lock/statement timeouts and expected index duration for the real table size.
-015-017 contain explicit transactions; 013 has no explicit wrapper, so the
+015-018 contain explicit transactions; 013 has no explicit wrapper, so the
 installer must provide transactional execution and stop on error. Do not execute
 selected fragments or continue after failed guards.
 
 There are no reviewed automatic down migrations. Prefer a reviewed forward fix
 or coordinated restore under a write pause. Restoring only application code can
 break compatibility: old three-write acceptance is rejected by 016, while newer
-messaging code needs 017's RPCs. Do not disable RLS, drop guards or grant privileged
+messaging code needs 017's RPCs and public pages need 018's view. Do not disable RLS, drop guards or grant privileged
 role membership as a rollback shortcut. A full restore must account for writes
 after the backup and Auth/data consistency.
 
-### Read-only verification SQL (prepared, not executed on hosted systems)
+### Read-only verification SQL (reference)
 
 Run only in an authorized session against a separately verified target.
 Capture results securely; definitions/history may contain sensitive operational
-details. Missing history/objects or unexpected counts are blockers, not a reason
+details. Unexpected objects/counts require inspection; known absent history is not a reason
 to bypass checks.
 
 ```sql
@@ -296,37 +287,52 @@ Destructive rollback-injection, account-password rotation and concurrency fixtur
 suites belong in staging/disposable databases. Production smoke tests below use
 separately authorized test accounts and a deliberate cleanup plan.
 
-## Launch checklist
+## Release verification and remaining work
 
-Checked items are preparation evidence only. Empty boxes require manual
-verification/authorization; none imply a failed production test.
+- [x] Reviewed source published and matching application deployment READY.
+- [x] Existing Hobby plan, production branch, Node 24.x and public HTTPS verified.
+- [x] Backup restoration, pre-cutover drift, schema/owner/ACL compatibility checked.
+- [x] Only approved 015-018 executed; migration history left untouched.
+- [x] Production public environment values and exact Auth URLs configured.
+- [x] Eight public routes and a public engineer/project detail rendered successfully.
+- [x] Anonymous dashboard redirects, client/engineer password login and role
+      dashboards passed; engineer access to the admin dashboard was denied.
+- [x] Client project creation/publication, two applications, rejection and atomic
+      acceptance passed through the live browser; direct acceptance was denied.
+- [x] Conversation creation and two-way messaging passed; another engineer could
+      not read the conversation/messages. Signed-out dashboard access was denied.
+- [x] Anonymous and cross-user private phone reads denied; display view has only
+      the approved fields; owner reads work and public view writes are denied.
+- [x] Dedicated fixture projects/accounts and temporary credentials removed.
+- [ ] Configure custom SMTP and verify actual signup/confirmation/recovery emails.
+- [ ] Resolve unverified `civilhub.com` metadata/contact ownership and policy text.
+- [ ] Configure operational monitoring, alerts and an off-device recovery copy.
+- [ ] Review native backup/PITR availability before accepting valuable new data.
+- [ ] Provision an isolated preview/staging backend before using preview builds.
+- [ ] Decide the repository license and any future explicit history adoption.
 
-- [x] GitHub release source synchronized at the inspected SHA.
-- [x] Application features, dependency versions and environment names reviewed.
-- [x] Local integration report preserved; safe screenshots captured.
-- [x] Hosting plan, migration order and rollback considerations prepared.
-- [ ] Review and publish the documentation; choose a repository license.
-- [ ] Approve host/account, runtime, branch integration and the actual website origin.
-- [ ] Verify backup/restore, hosted history/schema/ACL/data compatibility and migration plan.
-- [ ] Authorize migrations and compatible app rollout with a marketplace-write pause.
-- [ ] Configure production public environment values before the approved fresh build.
-- [ ] Set Auth Site URL, exact callbacks, recovery, email templates and SMTP delivery.
-- [ ] Resolve source metadata/contact-domain ownership and review public policy text.
-- [ ] Deploy only after separate authorization; record SHA, host runtime and operator.
-- [ ] Verify HTTPS, public pages, tools, resources, directory and project detail pages.
-- [ ] Verify client and engineer signup, confirmation, login, logout and password recovery.
-- [ ] Verify canonical admin authorization and client/engineer cross-role denials.
-- [ ] With authorized test accounts: create/edit/publish a project, discover it,
-      submit/review an application, accept once, reject/withdraw eligible pending
-      applications, and confirm assignment/notifications. Clean up exact test IDs.
-- [ ] Verify eligible conversation creation, sending from both roles, read receipts
-      and history; deny guest/rival/unrelated access and sender spoofing.
-- [ ] Configure error monitoring/alerts and log retention/redaction; check Auth,
-      database and function errors without recording tokens or message contents.
-- [ ] Confirm no production bundles target loopback/staging and no preview targets production.
-- [ ] Verify public accessibility and project identity, then add the real website
-      to GitHub About and README. Obtain approval for any release publication.
+No positive live admin login, opportunity-submission workflow, bulk/admin/FK-delete
+interaction, complete email round trip or higher-isolation workload was tested in
+this cutover. Local SQL suites cover additional security cases but do not turn
+those live gaps into verified results.
 
-Higher-isolation, bulk/admin and FK-delete interactions remain documented
-operational test gaps. The owner must decide their release requirements against
-the actual workload; local successful schedules do not remove those limits.
+## Recovery record
+
+See [PRODUCTION_RECOVERY_PLAN.md](PRODUCTION_RECOVERY_PLAN.md) for the reviewed
+backup evidence, owner/ACL restoration requirements and exact release scope.
+The final pre-cutover check matched all 50 data tables and schema/security
+metadata against the verified snapshot. After fixture cleanup, all 12 public
+tables and the original Auth users matched their backup content hashes. Normal
+Auth service audit entries were excluded from that comparison. Migration
+installation rewrote no existing rows; smoke tests used dedicated records.
+
+A failed migration rolls back its own transaction; prior successful files remain.
+There are no reviewed down migrations. Stop publication on failure and prefer a
+reviewed forward fix. Do not revert to pre-release code against the secured
+schema. Full recovery requires a separately approved compatible target and write
+pause; a snapshot loses later writes unless they are recovered separately.
+
+The backup is a logical database recovery source, not a full hosted-project
+export. Hosted signing/API/SMTP/OAuth credentials and configuration, role login
+passwords and Storage file bytes are outside it; there were zero Storage object
+rows at capture. Native backups/PITR and an off-device copy were not verified.

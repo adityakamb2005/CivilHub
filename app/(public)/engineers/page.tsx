@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     'Browse and connect with verified civil engineers. Filter by specialization, location, and experience.',
 }
 
-type Profile = Database['public']['Tables']['profiles']['Row']
+type Profile = Database['public']['Views']['public_profiles']['Row']
 type EngineerProfile = Database['public']['Tables']['engineer_profiles']['Row']
 
 export default async function EngineersPage() {
@@ -47,7 +47,7 @@ export default async function EngineersPage() {
   const profileIds = publicEngProfiles.map((e) => e.profile_id)
 
   const { data: profilesData } = await supabase
-    .from('profiles')
+    .from('public_profiles')
     .select('*')
     .in('id', profileIds)
     .eq('role', 'engineer')

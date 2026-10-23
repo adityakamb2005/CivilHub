@@ -22,7 +22,7 @@ import {
   CalendarCheck
 } from 'lucide-react'
 
-type Profile = Database['public']['Tables']['profiles']['Row']
+type Profile = Database['public']['Views']['public_profiles']['Row']
 type EngineerProfile = Database['public']['Tables']['engineer_profiles']['Row']
 type CivilHubProject = Pick<Database['public']['Tables']['projects']['Row'], 'id' | 'title' | 'description' | 'project_type' | 'location' | 'status'>
 
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = await createClient()
 
   const { data: profile } = await supabase
-    .from('profiles')
+    .from('public_profiles')
     .select('*')
     .eq('id', id)
     .single()
@@ -76,7 +76,7 @@ export default async function PublicEngineerProfilePage({ params }: Props) {
 
   // 1. Fetch profile
   const { data: profileData } = await supabase
-    .from('profiles')
+    .from('public_profiles')
     .select('*')
     .eq('id', id)
     .single()

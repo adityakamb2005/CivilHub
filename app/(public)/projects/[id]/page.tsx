@@ -148,7 +148,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
 
     if (engineerProfile?.profile_id) {
       const { data: profileData } = await supabase
-        .from('profiles')
+        .from('public_profiles')
         .select('*')
         .eq('id', engineerProfile.profile_id)
         .eq('role', 'engineer')

@@ -468,7 +468,13 @@ export interface Database {
         Relationships: []
       }
     }
-    Views: Record<string, never>
+    Views: {
+      public_profiles: {
+        Row: Pick<Database['public']['Tables']['profiles']['Row'],
+          'id' | 'role' | 'full_name' | 'avatar_url' | 'location'>
+        Relationships: []
+      }
+    }
     Functions: {
       conversation_participant_cards: {
         Args: Record<string, never>
